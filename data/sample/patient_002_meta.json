@@ -1,0 +1,14 @@
+{
+  "patient_id": "P-86205",
+  "name": "Sofia Singh",
+  "dob": "1974-08-18",
+  "sex": "M",
+  "blood_type": "A+",
+  "allergies": [],
+  "weight_kg": 47,
+  "height_cm": 174,
+  "dosage_mg": 12,
+  "insurance_id": "INS-431823",
+  "referring_physician": "Dr. Patel, MD",
+  "study_date": "2026-08-14"
+}

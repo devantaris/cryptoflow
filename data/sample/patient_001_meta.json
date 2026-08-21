@@ -1,0 +1,17 @@
+{
+  "patient_id": "P-13981",
+  "name": "Yuki Garcia",
+  "dob": "1950-08-28",
+  "sex": "F",
+  "blood_type": "AB+",
+  "allergies": [
+    "codeine",
+    "latex"
+  ],
+  "weight_kg": 60,
+  "height_cm": 194,
+  "dosage_mg": 92,
+  "insurance_id": "INS-836350",
+  "referring_physician": "Dr. Williams, MD",
+  "study_date": "2026-08-19"
+}

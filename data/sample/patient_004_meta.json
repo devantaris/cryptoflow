@@ -1,0 +1,18 @@
+{
+  "patient_id": "P-10885",
+  "name": "Alex Hassan",
+  "dob": "1976-10-26",
+  "sex": "F",
+  "blood_type": "B+",
+  "allergies": [
+    "codeine",
+    "aspirin",
+    "aspirin"
+  ],
+  "weight_kg": 87,
+  "height_cm": 183,
+  "dosage_mg": 98,
+  "insurance_id": "INS-494943",
+  "referring_physician": "Dr. Santos, MD",
+  "study_date": "2026-08-22"
+}

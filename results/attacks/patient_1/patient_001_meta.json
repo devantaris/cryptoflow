@@ -1,0 +1,16 @@
+{
+  "patient_id": "P-31262",
+  "name": "James Hassan",
+  "dob": "1995-12-18",
+  "sex": "F",
+  "blood_type": "A-",
+  "allergies": [
+    "ibuprofen"
+  ],
+  "weight_kg": 93,
+  "height_cm": 161,
+  "dosage_mg": 30,
+  "insurance_id": "INS-488663",
+  "referring_physician": "Dr. Williams, MD",
+  "study_date": "2026-08-21"
+}

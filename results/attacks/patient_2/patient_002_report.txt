@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: Anika Williams
+DOB: 1964-11-25
+Study: CT Chest with contrast
+Date: 2026-08-24
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+Small pleural effusion on the left side.
+
+IMPRESSION:
+Normal cardiac silhouette. Clear lungs bilaterally.
+
+RECOMMENDATION:
+Follow-up CT in 3 months recommended.
+
+Signed: Dr. Santos, MD
+Report ID: RPT-27020

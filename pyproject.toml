@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryptoflow"
+version = "0.1.0"
+description = "CryptoFlow: Medical image encryption pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cryptography>=43.0",
+    "typer[all]>=0.12",
+    "rich>=13.0",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "Pillow>=10.0",
+    "pydicom>=2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[project.scripts]
+cryptoflow = "cryptoflow.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]

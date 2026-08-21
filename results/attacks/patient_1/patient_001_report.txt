@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: Maria Mueller
+DOB: 1999-01-26
+Study: CT Head without contrast
+Date: 2026-08-20
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+No acute cardiopulmonary abnormality.
+
+IMPRESSION:
+Small pleural effusion on the left side.
+
+RECOMMENDATION:
+Follow-up CT in 3 months recommended.
+
+Signed: Dr. Santos, MD
+Report ID: RPT-37006

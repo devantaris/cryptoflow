@@ -1,0 +1,17 @@
+{
+  "patient_id": "P-58394",
+  "name": "David Mueller",
+  "dob": "1952-09-27",
+  "sex": "F",
+  "blood_type": "A+",
+  "allergies": [
+    "sulfa",
+    "sulfa"
+  ],
+  "weight_kg": 67,
+  "height_cm": 169,
+  "dosage_mg": 78,
+  "insurance_id": "INS-642879",
+  "referring_physician": "Dr. Chen, MD",
+  "study_date": "2026-08-19"
+}

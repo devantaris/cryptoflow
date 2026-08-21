@@ -1,0 +1,67 @@
+[
+  {
+    "size_label": "100 KB",
+    "raw_size_bytes": 103262,
+    "bundle_size_bytes": 104379,
+    "overhead_ratio": 1.0108199393140656,
+    "iterations": 3,
+    "mean_enc_time_s": 0.07281400001375005,
+    "std_enc_time_s": 0.022544801818216956,
+    "mean_dec_time_s": 0.03911373332569686,
+    "std_dec_time_s": 0.0025323016412997913,
+    "mean_enc_throughput_mb_s": 1.4661781353506662,
+    "mean_dec_throughput_mb_s": 2.5240809091005505
+  },
+  {
+    "size_label": "1 MB",
+    "raw_size_bytes": 1049420,
+    "bundle_size_bytes": 1050541,
+    "overhead_ratio": 1.0010682315006738,
+    "iterations": 3,
+    "mean_enc_time_s": 0.06239843333605677,
+    "std_enc_time_s": 0.02545368318440438,
+    "mean_dec_time_s": 0.06412606665981002,
+    "std_dec_time_s": 0.04854356524936836,
+    "mean_enc_throughput_mb_s": 17.62914306559627,
+    "mean_dec_throughput_mb_s": 21.275171521471425
+  },
+  {
+    "size_label": "5 MB",
+    "raw_size_bytes": 5243701,
+    "bundle_size_bytes": 5244822,
+    "overhead_ratio": 1.000213779938254,
+    "iterations": 3,
+    "mean_enc_time_s": 0.09118260000832379,
+    "std_enc_time_s": 0.022318139982320906,
+    "mean_dec_time_s": 0.12563683333185813,
+    "std_dec_time_s": 0.06063613044882623,
+    "mean_enc_throughput_mb_s": 57.5185525765959,
+    "mean_dec_throughput_mb_s": 45.307251213479134
+  },
+  {
+    "size_label": "10 MB",
+    "raw_size_bytes": 10486581,
+    "bundle_size_bytes": 10487706,
+    "overhead_ratio": 1.0001072798518114,
+    "iterations": 3,
+    "mean_enc_time_s": 0.11817560000539136,
+    "std_enc_time_s": 0.009878778786032976,
+    "mean_dec_time_s": 0.10378969999146648,
+    "std_dec_time_s": 0.027648458406750037,
+    "mean_enc_throughput_mb_s": 85.03530511001851,
+    "mean_dec_throughput_mb_s": 101.29101945562677
+  },
+  {
+    "size_label": "25 MB",
+    "raw_size_bytes": 26215221,
+    "bundle_size_bytes": 26216346,
+    "overhead_ratio": 1.0000429140226013,
+    "iterations": 3,
+    "mean_enc_time_s": 0.20861806666168073,
+    "std_enc_time_s": 0.007457641103137246,
+    "mean_dec_time_s": 0.19043686665827408,
+    "std_dec_time_s": 0.009130724751198284,
+    "mean_enc_throughput_mb_s": 119.94180977005801,
+    "mean_dec_throughput_mb_s": 131.48781346270206
+  }
+]

@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: James Okafor
+DOB: 1993-05-01
+Study: Chest X-ray PA and Lateral
+Date: 2026-08-22
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+Calcified granuloma in right upper lobe, likely benign.
+
+IMPRESSION:
+Small pleural effusion on the left side.
+
+RECOMMENDATION:
+Repeat chest X-ray in 6 weeks.
+
+Signed: Dr. Mueller, MD
+Report ID: RPT-75868

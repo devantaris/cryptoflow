@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: Yuki Tanaka
+DOB: 1951-05-17
+Study: CT Abdomen and Pelvis
+Date: 2026-08-09
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+Bilateral ground-glass opacities consistent with pneumonia.
+
+IMPRESSION:
+Suspicious mass measuring 2.3cm in lower right lobe.
+
+RECOMMENDATION:
+Repeat chest X-ray in 6 weeks.
+
+Signed: Dr. Santos, MD
+Report ID: RPT-52660

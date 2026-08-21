@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: James Kim
+DOB: 1982-05-05
+Study: Chest X-ray PA and Lateral
+Date: 2026-08-03
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+Enlarged mediastinal lymph nodes requiring follow-up.
+
+IMPRESSION:
+Calcified granuloma in right upper lobe, likely benign.
+
+RECOMMENDATION:
+Correlate with clinical findings. Consider MRI.
+
+Signed: Dr. Williams, MD
+Report ID: RPT-56397

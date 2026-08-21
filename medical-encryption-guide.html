@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Encryption Pipeline — Visual Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #0b0f19;
+  --bg-elev: #111827;
+  --bg-card: #1a2236;
+  --border: #243049;
+  --cyan: #22d3ee;
+  --cyan-dim: #0891b2;
+  --amber: #f59e0b;
+  --amber-dim: #b45309;
+  --red: #f43f5e;
+  --red-dim: #be123c;
+  --green: #34d399;
+  --green-dim: #059669;
+  --purple: #a78bfa;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-faint: #475569;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+#particle-canvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+.nav {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; gap:8px; padding:16px 24px;
+  background: rgba(11,15,25,0.85); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+.nav-btn {
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500;
+  padding:8px 16px; border-radius:8px; border:1px solid var(--border);
+  background:transparent; color:var(--text-dim); cursor:pointer;
+  white-space:nowrap; transition:all .3s;
+}
+.nav-btn:hover, .nav-btn.active {
+  border-color:var(--cyan); color:var(--cyan);
+  background: rgba(34,211,238,0.08); box-shadow:0 0 12px rgba(34,211,238,0.15);
+}
+
+.scene {
+  position: fixed; top:0; left:0; width:100%; height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding: 80px 24px 24px; opacity:0; pointer-events:none;
+  transition: opacity .6s ease; z-index:1;
+}
+.scene.active { opacity:1; pointer-events:auto; z-index:10; }
+
+.hero-content { text-align:center; max-width:800px; }
+.hero-badge {
+  display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:0.15em; text-transform:uppercase; color:var(--cyan);
+  border:1px solid var(--cyan-dim); padding:6px 16px; border-radius:100px;
+  margin-bottom:24px; animation:pulse-glow 3s infinite;
+}
+@keyframes pulse-glow {
+  0%,100%{box-shadow:0 0 8px rgba(34,211,238,0.2)}
+  50%{box-shadow:0 0 20px rgba(34,211,238,0.4)}
+}
+.hero-title {
+  font-size:clamp(2.5rem,6vw,5rem); font-weight:900; line-height:1.05;
+  background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:16px;
+}
+.hero-sub { font-size:1.25rem; color:var(--text-dim); max-width:560px; margin:0 auto 40px; }
+.hero-cta {
+  font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:600;
+  padding:14px 36px; border-radius:12px; border:none;
+  background: linear-gradient(135deg, var(--cyan-dim), var(--cyan));
+  color:#000; cursor:pointer; transition:all .3s;
+  box-shadow:0 4px 24px rgba(34,211,238,0.3);
+}
+.hero-cta:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(34,211,238,0.5); }
+
+.scene-header { text-align:center; margin-bottom:24px; }
+.scene-num {
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-faint);
+  letter-spacing:0.2em; text-transform:uppercase; margin-bottom:8px;
+}
+.scene-title { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; margin-bottom:8px; }
+.scene-desc { color:var(--text-dim); font-size:1.05rem; max-width:600px; margin:0 auto; }
+
+.file-card {
+  width:160px; height:200px; border-radius:16px;
+  background: var(--bg-card); border:2px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; cursor:pointer; transition:all .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.file-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  opacity:0; transition:opacity .3s;
+}
+.file-card:hover { transform:translateY(-8px) scale(1.03); border-color:var(--cyan); box-shadow:0 12px 40px rgba(34,211,238,0.15); }
+.file-card:hover::before { opacity:1; }
+.file-card.locked { border-color:var(--green); }
+.file-card.locked::before { background:var(--green); opacity:1; }
+.file-card.tampered { border-color:var(--red); animation:shake .5s; }
+.file-card.tampered::before { background:var(--red); opacity:1; }
+.file-card.swapped { border-color:var(--amber); }
+.file-card.swapped::before { background:var(--amber); opacity:1; }
+.file-icon { font-size:3rem; transition:all .3s; }
+.file-card.locked .file-icon { filter:grayscale(0.3); }
+.file-label { font-size:13px; font-weight:600; color:var(--text); text-align:center; }
+.file-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-faint); }
+.file-seal {
+  position:absolute; top:-8px; right:-8px; width:32px; height:32px;
+  background:var(--amber); border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:14px; border:3px solid var(--bg); box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  opacity:0; transform:scale(0); transition:all .4s cubic-bezier(.34,1.56,.64,1);
+}
+.file-card.sealed .file-seal { opacity:1; transform:scale(1); }
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-12px)}
+  40%{transform:translateX(12px)}
+  60%{transform:translateX(-8px)}
+  80%{transform:translateX(8px)}
+}
+
+.pipeline-track {
+  display:flex; align-items:center; gap:12px; margin:32px 0;
+  flex-wrap:wrap; justify-content:center;
+}
+.stage-node {
+  width:72px; height:72px; border-radius:16px;
+  background:var(--bg-card); border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700;
+  color:var(--text-faint); cursor:pointer; transition:all .4s;
+  position:relative;
+}
+.stage-node:hover, .stage-node.active {
+  border-color:var(--cyan); color:var(--cyan);
+  box-shadow:0 0 20px rgba(34,211,238,0.2);
+}
+.stage-node.active { background:rgba(34,211,238,0.1); }
+.stage-connector {
+  width:40px; height:2px; background:var(--border); position:relative;
+  transition:all .4s;
+}
+.stage-connector.flowing { background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 0 8px var(--cyan); }
+.stage-connector::after {
+  content:''; position:absolute; right:-4px; top:-3px;
+  width:0; height:0; border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:6px solid var(--border);
+}
+.stage-connector.flowing::after { border-left-color:var(--purple); }
+
+.stage-panel {
+  max-width:720px; width:100%; background:var(--bg-card);
+  border:1px solid var(--border); border-radius:20px; padding:32px;
+  margin-top:16px; opacity:0; transform:translateY(16px);
+  transition:all .5s ease; display:none;
+}
+.stage-panel.show { opacity:1; transform:translateY(0); display:block; }
+.stage-panel h3 {
+  font-size:1.3rem; font-weight:700; margin-bottom:12px;
+  display:flex; align-items:center; gap:12px;
+}
+.stage-panel .analogy {
+  background: linear-gradient(135deg, rgba(245,158,11,0.1), transparent);
+  border-left:3px solid var(--amber); padding:16px 20px; border-radius:0 12px 12px 0;
+  margin:16px 0; font-size:15px; color:var(--text-dim);
+}
+.stage-panel .analogy strong { color:var(--amber); }
+
+.flow-svg {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:5;
+}
+.flow-path {
+  fill:none; stroke:var(--border); stroke-width:2; stroke-dasharray:8 4;
+}
+.flow-path.active {
+  stroke:var(--cyan); stroke-dasharray:8 4;
+  animation:dash 1s linear infinite;
+}
+@keyframes dash { to { stroke-dashoffset:-24; } }
+
+.packet {
+  position:absolute; width:12px; height:12px; border-radius:50%;
+  background:var(--cyan); box-shadow:0 0 12px var(--cyan), 0 0 24px var(--cyan);
+  pointer-events:none; z-index:20; opacity:0;
+}
+
+.key-visual {
+  display:flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--amber); background:rgba(245,158,11,0.1);
+  border:1px solid var(--amber-dim); border-radius:8px;
+  padding:6px 12px; white-space:nowrap;
+}
+.key-icon { font-size:14px; }
+
+.hash-chain {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
+  margin:16px 0;
+}
+.hash-block {
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  padding:8px 12px; border-radius:8px; background:var(--bg);
+  border:1px solid var(--border); color:var(--text-faint);
+  transition:all .4s;
+}
+.hash-block.linked {
+  border-color:var(--purple); color:var(--purple);
+  box-shadow:0 0 12px rgba(167,139,250,0.2);
+}
+.hash-block.broken {
+  border-color:var(--red); color:var(--red);
+  animation:shake .5s; box-shadow:0 0 12px rgba(244,63,94,0.3);
+}
+.hash-arrow { color:var(--text-faint); font-size:12px; }
+
+.sim-grid {
+  display:grid; grid-template-columns: repeat(3, 1fr); gap:20px;
+  max-width:600px; width:100%; margin:24px auto;
+}
+@media(max-width:640px){ .sim-grid{grid-template-columns:1fr;} }
+
+.control-bar {
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  margin:24px 0;
+}
+.ctrl-btn {
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+  padding:10px 20px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg-card); color:var(--text); cursor:pointer;
+  transition:all .3s;
+}
+.ctrl-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+.ctrl-btn.primary {
+  background: linear-gradient(135deg, var(--cyan-dim), var(--cyan));
+  color:#000; border:none; box-shadow:0 4px 16px rgba(34,211,238,0.25);
+}
+.ctrl-btn.primary:hover { box-shadow:0 6px 24px rgba(34,211,238,0.4); }
+.ctrl-btn.danger { border-color:var(--red); color:var(--red); }
+.ctrl-btn.danger:hover { background:rgba(244,63,94,0.1); }
+.ctrl-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+.status-log {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  max-width:600px; width:100%; height:140px; overflow-y:auto;
+  background:var(--bg); border:1px solid var(--border); border-radius:12px;
+  padding:16px; margin:16px auto; color:var(--text-dim);
+}
+.status-log .log-entry { margin-bottom:6px; animation:fadeIn .3s; }
+.status-log .log-time { color:var(--text-faint); margin-right:8px; }
+.status-log .log-ok { color:var(--green); }
+.status-log .log-warn { color:var(--amber); }
+.status-log .log-err { color:var(--red); }
+.status-log .log-info { color:var(--cyan); }
+@keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+
+.split-view {
+  display:grid; grid-template-columns:1fr 1fr; gap:24px;
+  max-width:800px; width:100%; margin:24px auto;
+}
+@media(max-width:640px){ .split-view{grid-template-columns:1fr;} }
+.split-col {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:16px;
+  padding:24px; text-align:center;
+}
+.split-col h4 {
+  font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em;
+  text-transform:uppercase; margin-bottom:16px;
+}
+.split-col.data-col h4 { color:var(--cyan); }
+.split-col.key-col h4 { color:var(--amber); }
+
+.scroll-hint {
+  position:absolute; bottom:32px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  color:var(--text-faint); font-size:11px; font-family:'JetBrains Mono',monospace;
+  animation:bounce 2s infinite;
+}
+@keyframes bounce { 0%,100%{transform:translateX(-50%)translateY(0)} 50%{transform:translateX(-50%)translateY(8px)} }
+
+.gloss-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px; max-width:900px; width:100%; margin:24px auto;
+}
+.gloss-card {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:16px;
+  padding:24px; cursor:pointer; transition:all .3s;
+}
+.gloss-card:hover { border-color:var(--cyan); transform:translateY(-4px); box-shadow:0 8px 24px rgba(34,211,238,0.1); }
+.gloss-card h4 { font-size:15px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.gloss-card p { font-size:13px; color:var(--text-dim); line-height:1.6; }
+
+.tooltip {
+  position:absolute; background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:12px; padding:16px; max-width:280px; font-size:13px;
+  color:var(--text-dim); box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  opacity:0; pointer-events:none; transition:opacity .3s; z-index:200;
+}
+.tooltip.show { opacity:1; }
+.tooltip strong { color:var(--text); display:block; margin-bottom:4px; }
+
+.flex-row { display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.mt-16 { margin-top:16px; } .mt-24 { margin-top:24px; } .mt-32 { margin-top:32px; }
+.mb-16 { margin-bottom:16px; } .mb-24 { margin-bottom:24px; }
+.text-cyan { color:var(--cyan); } .text-amber { color:var(--amber); }
+.text-red { color:var(--red); } .text-green { color:var(--green); }
+.text-purple { color:var(--purple); }
+.mono { font-family:'JetBrains Mono',monospace; }
+
+.attack-scene { position:relative; width:100%; max-width:700px; height:280px; margin:24px auto; }
+.attack-lane {
+  position:absolute; left:10%; right:10%; height:60px; border-radius:12px;
+  background:var(--bg-card); border:1px dashed var(--border);
+  display:flex; align-items:center; justify-content:space-around; padding:0 20px;
+}
+.attack-lane.top { top:20px; }
+.attack-lane.bottom { bottom:20px; }
+.attack-lane-label {
+  position:absolute; left:12px; font-family:'JetBrains Mono',monospace; font-size:10px;
+  color:var(--text-faint); text-transform:uppercase;
+}
+.attack-actor {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:80px; height:80px; border-radius:50%;
+  background:var(--bg-card); border:2px solid var(--red);
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  box-shadow:0 0 20px rgba(244,63,94,0.3); z-index:10;
+}
+.attack-arrow {
+  position:absolute; left:50%; top:35%; transform:translateX(-50%);
+  font-size:1.5rem; color:var(--red); opacity:0; transition:opacity .3s;
+}
+.attack-arrow.show { opacity:1; }
+
+.wax-seal {
+  width:64px; height:64px; border-radius:50%;
+  background: radial-gradient(circle at 35% 35%, #f43f5e, #be123c);
+  display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+  box-shadow:0 4px 20px rgba(244,63,94,0.4), inset 0 -4px 8px rgba(0,0,0,0.3);
+  margin:0 auto; animation:pulse-seal 2s infinite;
+}
+@keyframes pulse-seal { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+.progress-ring {
+  width:120px; height:120px; margin:0 auto;
+}
+.progress-ring circle { fill:none; stroke:var(--border); stroke-width:4; }
+.progress-ring .progress-fill { stroke:var(--cyan); stroke-dasharray:283; stroke-dashoffset:283; transition:stroke-dashoffset 1s ease; }
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text-faint); }
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="goTo(0)">Start</button>
+  <button class="nav-btn" onclick="goTo(1)">The Problem</button>
+  <button class="nav-btn" onclick="goTo(2)">Encryption</button>
+  <button class="nav-btn" onclick="goTo(3)">Pipeline</button>
+  <button class="nav-btn" onclick="goTo(4)">Simulator</button>
+  <button class="nav-btn" onclick="goTo(5)">Attacks</button>
+  <button class="nav-btn" onclick="goTo(6)">Glossary</button>
+</nav>
+
+<!-- SCENE 0: HERO -->
+<div class="scene active" id="scene-0">
+  <div class="hero-content">
+    <div class="hero-badge">Interactive Visual Lab</div>
+    <h1 class="hero-title">Medical Data<br>Encryption Pipeline</h1>
+    <p class="hero-sub">See how hospitals lock, bind, and protect scans + reports + metadata — not as text, but as a living system.</p>
+    <button class="hero-cta" onclick="goTo(1)">Enter the Lab →</button>
+  </div>
+  <div class="scroll-hint">
+    <span>▼</span>
+    <span>click nav or scroll</span>
+  </div>
+</div>
+
+<!-- SCENE 1: THE PROBLEM -->
+<div class="scene" id="scene-1">
+  <div class="scene-header">
+    <div class="scene-num">Scene 01 / The Setup</div>
+    <h2 class="scene-title">Three Files. One Patient. <span class="text-red">Zero Protection.</span></h2>
+    <p class="scene-desc">A hospital sends a CT scan, a doctor's report, and patient metadata. Click each file to inspect.</p>
+  </div>
+
+  <div class="flex-row mt-32">
+    <div class="file-card" id="f1" onclick="inspectFile(1)">
+      <div class="file-icon">🖼️</div>
+      <div class="file-label">CT Scan</div>
+      <div class="file-meta">512×512 DICOM</div>
+      <div class="file-seal">🔒</div>
+    </div>
+    <div class="file-card" id="f2" onclick="inspectFile(2)">
+      <div class="file-icon">📝</div>
+      <div class="file-label">Report</div>
+      <div class="file-meta">2.4 KB TXT</div>
+      <div class="file-seal">🔒</div>
+    </div>
+    <div class="file-card" id="f3" onclick="inspectFile(3)">
+      <div class="file-icon">👤</div>
+      <div class="file-label">Patient Info</div>
+      <div class="file-meta">JSON Metadata</div>
+      <div class="file-seal">🔒</div>
+    </div>
+  </div>
+
+  <div class="control-bar mt-32">
+    <button class="ctrl-btn danger" onclick="runSwapAttack()">⚡ Simulate Swap Attack</button>
+    <button class="ctrl-btn" onclick="resetFiles()">↺ Reset</button>
+  </div>
+
+  <div class="status-log" id="log1">
+    <div class="log-entry"><span class="log-time">[SYS]</span>Three files ready for transmission. No encryption active.</div>
+  </div>
+
+  <div class="attack-scene" id="attackViz" style="display:none;">
+    <div class="attack-lane top">
+      <span class="attack-lane-label">Original</span>
+      <span>🖼️ Scan-A</span><span>📝 Report-A</span><span>👤 Info-A</span>
+    </div>
+    <div class="attack-actor">👤</div>
+    <div class="attack-arrow" id="attackArrow">⇅</div>
+    <div class="attack-lane bottom">
+      <span class="attack-lane-label">After Attack</span>
+      <span>🖼️ Scan-A</span><span>📝 Report-B</span><span>👤 Info-A</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 2: ENCRYPTION -->
+<div class="scene" id="scene-2">
+  <div class="scene-header">
+    <div class="scene-num">Scene 02 / The Lock</div>
+    <h2 class="scene-title">What Is <span class="text-cyan">Encryption?</span></h2>
+    <p class="scene-desc">Not magic. Just a lock. Watch the transformation.</p>
+  </div>
+
+  <div class="flex-row mt-32">
+    <div style="text-align:center;">
+      <div class="file-card" id="enc-before">
+        <div class="file-icon">📝</div>
+        <div class="file-label">Plain Report</div>
+        <div class="file-meta">"Patient shows..."</div>
+      </div>
+      <div class="mt-16 mono text-faint" style="color:var(--text-faint);font-size:12px;">Readable text</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="font-size:2rem;transition:all .5s;" id="lock-icon">🔓</div>
+      <button class="ctrl-btn primary" id="enc-btn" onclick="toggleEncrypt()">Lock It</button>
+    </div>
+
+    <div style="text-align:center;">
+      <div class="file-card locked" id="enc-after" style="opacity:0.3;transform:scale(0.9);">
+        <div class="file-icon">🔐</div>
+        <div class="file-label">Ciphertext</div>
+        <div class="file-meta mono">0x9f4a2b...</div>
+      </div>
+      <div class="mt-16 mono" style="color:var(--green);font-size:12px;opacity:0;" id="enc-label">Scrambled gibberish</div>
+    </div>
+  </div>
+
+  <div class="stage-panel show" style="margin-top:40px;">
+    <h3>🔐 <span style="color:var(--cyan)">The Lock & Key Analogy</span></h3>
+    <div class="analogy">
+      <strong>Analogy:</strong> You put a letter in a box and snap a padlock. Anyone can carry the box, but only the key opens it. Encryption is that — but mathematical. AES-256 is the "Fort Knox" of digital locks: a specific design trusted by banks and governments for decades.
+    </div>
+    <div class="flex-row mt-16">
+      <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">AES-256 Key</span></div>
+      <span style="color:var(--text-faint);">→</span>
+      <div class="key-visual"><span class="key-icon">📦</span><span class="mono">Scrambled Data</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3: PIPELINE -->
+<div class="scene" id="scene-3">
+  <div class="scene-header">
+    <div class="scene-num">Scene 03 / The System</div>
+    <h2 class="scene-title">The <span class="text-purple">Five-Stage</span> Pipeline</h2>
+    <p class="scene-desc">Click a stage to see inside. Then run the full pipeline.</p>
+  </div>
+
+  <div class="pipeline-track">
+    <div class="stage-node active" onclick="showStage(1)" id="sn1">1</div>
+    <div class="stage-connector" id="sc1"></div>
+    <div class="stage-node" onclick="showStage(2)" id="sn2">2</div>
+    <div class="stage-connector" id="sc2"></div>
+    <div class="stage-node" onclick="showStage(3)" id="sn3">3</div>
+    <div class="stage-connector" id="sc3"></div>
+    <div class="stage-node" onclick="showStage(4)" id="sn4">4</div>
+    <div class="stage-connector" id="sc4"></div>
+    <div class="stage-node" onclick="showStage(5)" id="sn5">5</div>
+  </div>
+
+  <div class="control-bar">
+    <button class="ctrl-btn primary" onclick="runFullPipeline()">▶ Run Full Pipeline</button>
+    <button class="ctrl-btn" onclick="resetPipeline()">↺ Reset</button>
+  </div>
+
+  <div class="stage-panel show" id="panel-1">
+    <h3><span class="text-cyan">01</span> Ingest — Standardize</h3>
+    <div class="flex-row mt-16">
+      <div class="file-card" style="width:120px;height:140px;"><div class="file-icon">🖼️</div><div class="file-label">Image</div></div>
+      <span style="color:var(--text-faint);">→</span>
+      <div class="file-card" style="width:120px;height:140px;"><div class="file-icon">📦</div><div class="file-label">Binary Blob</div></div>
+    </div>
+    <div class="analogy">
+      <strong>Analogy:</strong> You can't ship a loose painting, a scroll, and index cards together. You repackage each into a standard shipping box first. The lock only fits one size.
+    </div>
+    <p style="font-size:14px;">All three files (image, text, metadata) are converted into a uniform binary format the encryption engine can consume.</p>
+  </div>
+
+  <div class="stage-panel" id="panel-2">
+    <h3><span class="text-amber">02</span> Key Management — Unique Keys</h3>
+    <div class="flex-row mt-16">
+      <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-A: 9f4a...</span></div>
+      <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-B: b2e7...</span></div>
+      <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-C: 1d8c...</span></div>
+    </div>
+    <div class="analogy">
+      <strong>Analogy:</strong> Hotel master key vs. room keys. Each guest gets a unique key. Lose one? Only re-key that room. Each file gets its own fresh, random key.
+    </div>
+  </div>
+
+  <div class="stage-panel" id="panel-3">
+    <h3><span class="text-green">03</span> Encrypt — Lock + Tamper Seal</h3>
+    <div class="flex-row mt-16">
+      <div class="file-card locked" style="width:120px;height:140px;"><div class="file-icon">🔐</div><div class="file-label">Locked</div></div>
+      <div style="text-align:center;">
+        <div class="mono text-green" style="font-size:11px;">AES-GCM</div>
+        <div style="font-size:1.5rem;margin:4px 0;">+</div>
+        <div class="mono text-purple" style="font-size:11px;">Auth Tag</div>
+      </div>
+      <div class="file-card locked" style="width:120px;height:140px;"><div class="file-icon">🔐</div><div class="file-label">Locked + Sealed</div></div>
+    </div>
+    <div class="analogy">
+      <strong>Analogy:</strong> Certified mail with a tamper-evident sticker. Steam it open and it says "VOID." AES-GCM is a lock that also sticks a seal on the box.
+    </div>
+  </div>
+
+  <div class="stage-panel" id="panel-4">
+    <h3><span class="text-red">04</span> Binding — The Wax Seal <span style="color:var(--red)">★ CRITICAL</span></h3>
+    <div class="wax-seal">🕯️</div>
+    <div class="hash-chain" id="hashChain">
+      <div class="hash-block" id="hb1">hash(🔐A)</div>
+      <span class="hash-arrow">+</span>
+      <div class="hash-block" id="hb2">hash(🔐B)</div>
+      <span class="hash-arrow">+</span>
+      <div class="hash-block" id="hb3">hash(🔐C)</div>
+      <span class="hash-arrow">=</span>
+      <div class="hash-block" id="hb-bind">BINDING_HASH</div>
+    </div>
+    <div class="analogy">
+      <strong>Analogy:</strong> A king sends three boxes but dips one ribbon in wax across ALL THREE with his royal seal. Swap any box? The ribbon breaks. The ambassador knows instantly.
+    </div>
+    <p style="font-size:14px;">The binding hash is computed from <em>all three encrypted files combined</em>, then embedded into each file. They are now cryptographically welded together.</p>
+    <button class="ctrl-btn danger mt-16" onclick="breakBinding()">💥 Try Breaking the Binding</button>
+  </div>
+
+  <div class="stage-panel" id="panel-5">
+    <h3><span class="text-purple">05</span> Package — Split Courier</h3>
+    <div class="split-view">
+      <div class="split-col data-col">
+        <h4>📦 Data Truck</h4>
+        <div class="flex-row" style="flex-direction:column;gap:8px;">
+          <div class="file-card locked" style="width:100px;height:100px;"><div class="file-icon">🔐</div></div>
+          <div class="file-card locked" style="width:100px;height:100px;"><div class="file-icon">🔐</div></div>
+          <div class="file-card locked sealed" style="width:100px;height:100px;"><div class="file-icon">🔐</div></div>
+        </div>
+        <div class="mt-16 mono" style="font-size:11px;color:var(--cyan);">+ binding metadata</div>
+      </div>
+      <div class="split-col key-col">
+        <h4>🔑 Key Truck</h4>
+        <div class="flex-row" style="flex-direction:column;gap:8px;">
+          <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-A</span></div>
+          <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-B</span></div>
+          <div class="key-visual"><span class="key-icon">🔑</span><span class="mono">Key-C</span></div>
+        </div>
+        <div class="mt-16 mono" style="font-size:11px;color:var(--amber);">different route</div>
+      </div>
+    </div>
+    <div class="analogy">
+      <strong>Analogy:</strong> Boxes go on Truck A. Keys go on Truck B, different route. Rob Truck A? Useless locked boxes. Rob Truck B? Keys with nothing to unlock.
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 4: SIMULATOR -->
+<div class="scene" id="scene-4">
+  <div class="scene-header">
+    <div class="scene-num">Scene 04 / The Lab</div>
+    <h2 class="scene-title">Interactive <span class="text-green">Simulator</span></h2>
+    <p class="scene-desc">Run the pipeline yourself. Watch every transformation.</p>
+  </div>
+
+  <div class="sim-grid" id="simGrid">
+    <div class="file-card" id="sim-f1"><div class="file-icon">🖼️</div><div class="file-label">CT Scan</div><div class="file-meta" id="sim-m1">raw</div><div class="file-seal" id="sim-s1">🔒</div></div>
+    <div class="file-card" id="sim-f2"><div class="file-icon">📝</div><div class="file-label">Report</div><div class="file-meta" id="sim-m2">raw</div><div class="file-seal" id="sim-s2">🔒</div></div>
+    <div class="file-card" id="sim-f3"><div class="file-icon">👤</div><div class="file-label">Patient Info</div><div class="file-meta" id="sim-m3">raw</div><div class="file-seal" id="sim-s3">🔒</div></div>
+  </div>
+
+  <div class="control-bar">
+    <button class="ctrl-btn" onclick="simStep(1)" id="btn-s1">1. Ingest</button>
+    <button class="ctrl-btn" onclick="simStep(2)" id="btn-s2" disabled>2. Key Gen</button>
+    <button class="ctrl-btn" onclick="simStep(3)" id="btn-s3" disabled>3. Encrypt</button>
+    <button class="ctrl-btn" onclick="simStep(4)" id="btn-s4" disabled>4. Bind</button>
+    <button class="ctrl-btn" onclick="simStep(5)" id="btn-s5" disabled>5. Package</button>
+    <button class="ctrl-btn danger" onclick="simAttack()" id="btn-atk" disabled>⚡ Attack</button>
+    <button class="ctrl-btn" onclick="simReset()">↺ Reset</button>
+  </div>
+
+  <div class="status-log" id="simLog">
+    <div class="log-entry"><span class="log-time">[READY]</span>Pipeline idle. Press Step 1 to begin.</div>
+  </div>
+
+  <div class="hash-chain mt-16" id="simHashChain" style="opacity:0;">
+    <div class="hash-block">🔐A</div><span class="hash-arrow">⊕</span>
+    <div class="hash-block">🔐B</div><span class="hash-arrow">⊕</span>
+    <div class="hash-block">🔐C</div><span class="hash-arrow">→</span>
+    <div class="hash-block linked" id="simBind">BOUND</div>
+  </div>
+</div>
+
+<!-- SCENE 5: ATTACKS -->
+<div class="scene" id="scene-5">
+  <div class="scene-header">
+    <div class="scene-num">Scene 05 / The Threat Model</div>
+    <h2 class="scene-title">What <span class="text-red">Could Go Wrong?</span></h2>
+    <p class="scene-desc">Three real-world failures. Click to simulate each.</p>
+  </div>
+
+  <div class="gloss-grid" style="max-width:900px;">
+    <div class="gloss-card" onclick="simScenario(1)">
+      <h4><span class="text-red">💀</span> Wrong Diagnosis</h4>
+      <p>Patient A has a tumor. Patient B has a migraine. Swap the reports. Without binding, the system accepts the wrong pairing. Doctor orders unnecessary surgery.</p>
+      <div class="mt-16" style="text-align:center;"><button class="ctrl-btn danger">Simulate</button></div>
+    </div>
+    <div class="gloss-card" onclick="simScenario(2)">
+      <h4><span class="text-red">🕵️</span> Silent Edit</h4>
+      <p>Hacker changes dosage from 10mg to 100mg in metadata. No tamper-evident seal means the system accepts it. Tenfold overdose administered.</p>
+      <div class="mt-16" style="text-align:center;"><button class="ctrl-btn danger">Simulate</button></div>
+    </div>
+    <div class="gloss-card" onclick="simScenario(3)">
+      <h4><span class="text-red">🎭</span> Identity Swap</h4>
+      <p>Insider swaps patient info on a celebrity's scan. Scan and report still match, so basic checks pass. Medical record now belongs to the wrong person.</p>
+      <div class="mt-16" style="text-align:center;"><button class="ctrl-btn danger">Simulate</button></div>
+    </div>
+  </div>
+
+  <div class="status-log mt-24" id="scenarioLog" style="display:none;"></div>
+</div>
+
+<!-- SCENE 6: GLOSSARY -->
+<div class="scene" id="scene-6">
+  <div class="scene-header">
+    <div class="scene-num">Reference</div>
+    <h2 class="scene-title">The <span class="text-cyan">Glossary</span></h2>
+    <p class="scene-desc">One sentence each. No jargon.</p>
+  </div>
+
+  <div class="gloss-grid">
+    <div class="gloss-card"><h4><span class="text-cyan">🔐</span> Encryption</h4><p>Scrambling information with a mathematical lock so only someone with the right key can read it.</p></div>
+    <div class="gloss-card"><h4><span class="text-amber">🔑</span> Key</h4><p>A very long, random password that tells the lock exactly how to scramble and unscramble the data.</p></div>
+    <div class="gloss-card"><h4><span class="text-purple">🏛️</span> AES-256</h4><p>A specific, battle-tested lock design used by banks and governments; the '256' means the key is enormously long.</p></div>
+    <div class="gloss-card"><h4><span class="text-cyan">🎲</span> IV / Nonce</h4><p>A one-time random number mixed into the lock so encrypting the same file twice produces completely different output.</p></div>
+    <div class="gloss-card"><h4><span class="text-green">👆</span> Hash</h4><p>A digital fingerprint: a short, unique code generated from a file. Change one bit, and the fingerprint becomes totally different.</p></div>
+    <div class="gloss-card"><h4><span class="text-red">🔗</span> Binding Hash</h4><p>A fingerprint computed across multiple files together, then embedded into each one, so they are cryptographically welded together.</p></div>
+    <div class="gloss-card"><h4><span class="text-red">🕵️</span> Tamper-Evident</h4><p>A property that makes it obvious if someone tried to open, change, or swap a file — like a broken wax seal.</p></div>
+    <div class="gloss-card"><h4><span class="text-purple">📦</span> Ciphertext</h4><p>The scrambled, unreadable output of encryption — what your file looks like while it's locked in the box.</p></div>
+    <div class="gloss-card"><h4><span class="text-amber">✉️</span> Envelope / Bundle</h4><p>The final package containing all encrypted files and binding information, ready to send through the network.</p></div>
+  </div>
+
+  <div style="text-align:center;margin-top:40px;">
+    <button class="hero-cta" onclick="goTo(0)">↺ Back to Start</button>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor(){ this.reset(); }
+  reset(){
+    this.x = Math.random()*canvas.width; this.y = Math.random()*canvas.height;
+    this.vx = (Math.random()-0.5)*0.3; this.vy = (Math.random()-0.5)*0.3;
+    this.size = Math.random()*2+0.5; this.alpha = Math.random()*0.5+0.1;
+  }
+  update(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>canvas.width||this.y<0||this.y>canvas.height) this.reset(); }
+  draw(){ ctx.fillStyle=`rgba(34,211,238,${this.alpha})`; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); }
+}
+for(let i=0;i<60;i++) particles.push(new Particle());
+function animateParticles(){ ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animateParticles); }
+animateParticles();
+
+let currentScene = 0;
+const scenes = document.querySelectorAll('.scene');
+const navBtns = document.querySelectorAll('.nav-btn');
+
+function goTo(n){
+  scenes.forEach((s,i)=>{ s.classList.toggle('active', i===n); });
+  navBtns.forEach((b,i)=>{ b.classList.toggle('active', i===n); });
+  currentScene = n;
+}
+
+const fileData = {
+  1: { name: 'CT Scan', type: 'DICOM Image', size: '24.5 MB', content: '512×512 grayscale slice. Patient: A. Date: 2026-08-20. Finding: mass detected in lower right lobe.' },
+  2: { name: 'Report', type: 'Plain Text', size: '2.4 KB', content: 'IMPRESSION: Suspicious mass measuring 2.3cm. RECOMMENDATION: Immediate biopsy required. Signed: Dr. Chen.' },
+  3: { name: 'Patient Info', type: 'JSON Metadata', size: '0.8 KB', content: '{"id":"P-8842","name":"Alex Rivera","dob":"1985-03-12","blood":"O+","allergies":"penicillin"}' }
+};
+
+function inspectFile(n){
+  const d = fileData[n];
+  log(`[INSPECT] ${d.name}: ${d.type} | ${d.size}`, 'info');
+  log(`→ ${d.content.substring(0,80)}...`, 'info');
+}
+
+function log(msg, type='info'){
+  const colors = {ok:'log-ok', warn:'log-warn', err:'log-err', info:'log-info'};
+  const c = colors[type] || 'log-info';
+  const time = new Date().toLocaleTimeString('en-US',{hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">[${time}]</span><span class="${c}">${msg}</span>`;
+  const logs = document.querySelectorAll('.status-log');
+  logs.forEach(l=>{ l.appendChild(entry.cloneNode(true)); l.scrollTop = l.scrollHeight; });
+}
+
+let swapped = false;
+function runSwapAttack(){
+  swapped = true;
+  document.getElementById('attackViz').style.display = 'block';
+  setTimeout(()=>document.getElementById('attackArrow').classList.add('show'), 200);
+  document.getElementById('f2').classList.add('swapped');
+  log('[ATTACK] Report-B swapped onto Patient A\'s scan set', 'err');
+  log('[RESULT] All files still appear valid individually', 'warn');
+  log('[DANGER] Doctor unlocks and sees mismatched data', 'err');
+}
+
+function resetFiles(){
+  swapped = false;
+  document.getElementById('attackViz').style.display = 'none';
+  document.getElementById('attackArrow').classList.remove('show');
+  document.querySelectorAll('.file-card').forEach(c=>c.classList.remove('swapped','tampered','locked','sealed'));
+  document.querySelectorAll('.status-log').forEach(l=>l.innerHTML='<div class="log-entry"><span class="log-time">[SYS]</span>Reset complete.</div>');
+}
+
+let encrypted = false;
+function toggleEncrypt(){
+  encrypted = !encrypted;
+  const before = document.getElementById('enc-before');
+  const after = document.getElementById('enc-after');
+  const label = document.getElementById('enc-label');
+  const icon = document.getElementById('lock-icon');
+  const btn = document.getElementById('enc-btn');
+
+  if(encrypted){
+    before.style.opacity = '0.3'; before.style.transform = 'scale(0.9)';
+    after.style.opacity = '1'; after.style.transform = 'scale(1)';
+    label.style.opacity = '1';
+    icon.textContent = '🔒';
+    btn.textContent = 'Unlock';
+    log('[ENCRYPT] File scrambled with AES-256 + GCM auth tag', 'ok');
+  } else {
+    before.style.opacity = '1'; before.style.transform = 'scale(1)';
+    after.style.opacity = '0.3'; after.style.transform = 'scale(0.9)';
+    label.style.opacity = '0';
+    icon.textContent = '🔓';
+    btn.textContent = 'Lock It';
+    log('[DECRYPT] File restored to plaintext', 'info');
+  }
+}
+
+function showStage(n){
+  document.querySelectorAll('.stage-node').forEach((el,i)=>el.classList.toggle('active', i+1===n));
+  document.querySelectorAll('.stage-panel').forEach((el,i)=>el.classList.toggle('show', i+1===n));
+}
+
+function resetPipeline(){
+  document.querySelectorAll('.stage-connector').forEach(c=>c.classList.remove('flowing'));
+  document.querySelectorAll('.stage-node').forEach((el,i)=>{ el.classList.remove('active'); if(i===0)el.classList.add('active'); });
+  document.querySelectorAll('.stage-panel').forEach((el,i)=>el.classList.remove('show')); document.getElementById('panel-1').classList.add('show');
+  document.querySelectorAll('.hash-block').forEach(h=>h.classList.remove('linked','broken'));
+  log('[PIPELINE] Reset to Stage 1', 'info');
+}
+
+function runFullPipeline(){
+  resetPipeline();
+  let stage = 1;
+  const next = ()=>{
+    if(stage>5) return;
+    showStage(stage);
+    if(stage>1) document.getElementById('sc'+(stage-1)).classList.add('flowing');
+    const msgs = ['','Ingest: files standardized','Keys: unique per-file keys generated','Encrypt: AES-GCM lock + tamper seal applied','BIND: all 3 files welded with shared hash','Package: data & keys sent separately'];
+    log(`[STAGE ${stage}] ${msgs[stage]}`, stage===4?'warn':'ok');
+    if(stage===4){
+      document.querySelectorAll('.hash-block').forEach(h=>h.classList.add('linked'));
+    }
+    stage++;
+    setTimeout(next, 1200);
+  };
+  next();
+}
+
+function breakBinding(){
+  const bind = document.getElementById('hb-bind');
+  bind.classList.remove('linked'); bind.classList.add('broken');
+  bind.textContent = 'BROKEN!';
+  log('[BINDING] Hash mismatch detected!', 'err');
+  log('[RESULT] System REFUSES to decrypt. Tamper alert triggered.', 'err');
+  setTimeout(()=>{ bind.classList.remove('broken'); bind.classList.add('linked'); bind.textContent='BINDING_HASH'; }, 3000);
+}
+
+let simState = 0;
+function simReset(){
+  simState = 0;
+  ['sim-f1','sim-f2','sim-f3'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.className = 'file-card';
+    document.getElementById('sim-m'+(i+1)).textContent = 'raw';
+    document.getElementById('sim-s'+(i+1)).style.opacity = '0';
+    document.getElementById('sim-s'+(i+1)).style.transform = 'scale(0)';
+  });
+  document.getElementById('simHashChain').style.opacity = '0';
+  document.getElementById('simLog').innerHTML = '<div class="log-entry"><span class="log-time">[READY]</span>Pipeline idle. Press Step 1 to begin.</div>';
+  for(let i=1;i<=5;i++) document.getElementById('btn-s'+i).disabled = i!==1;
+  document.getElementById('btn-atk').disabled = true;
+}
+
+function simStep(n){
+  if(n !== simState+1) return;
+  simState = n;
+  const cards = ['sim-f1','sim-f2','sim-f3'];
+
+  if(n===1){
+    cards.forEach(id=>document.getElementById(id).querySelector('.file-meta').textContent='binary');
+    log('[01] Ingest: All files converted to binary blobs', 'ok');
+  }
+  if(n===2){
+    log('[02] Keys: 3 unique AES-256 keys generated', 'ok');
+    log('→ Key-A: 9f4a2b... | Key-B: b2e71c... | Key-C: 1d8c9e...', 'info');
+  }
+  if(n===3){
+    cards.forEach(id=>document.getElementById(id).classList.add('locked'));
+    log('[03] Encrypt: AES-GCM applied. Files now ciphertext.', 'ok');
+    log('→ Auth tags generated for tamper detection', 'ok');
+  }
+  if(n===4){
+    cards.forEach(id=>document.getElementById(id).classList.add('sealed'));
+    document.getElementById('simHashChain').style.opacity = '1';
+    log('[04] BINDING: Shared hash computed across all 3 files', 'warn');
+    log('→ Files are now cryptographically welded together', 'warn');
+  }
+  if(n===5){
+    log('[05] Package: Bundle sealed. Keys routed separately.', 'ok');
+    log('→ Data truck dispatched | Key truck dispatched', 'ok');
+    document.getElementById('btn-atk').disabled = false;
+  }
+
+  for(let i=1;i<=5;i++) document.getElementById('btn-s'+i).disabled = i!==n+1 && i!==n;
+  if(n<5) document.getElementById('btn-s'+(n+1)).disabled = false;
+}
+
+function simAttack(){
+  const cards = ['sim-f1','sim-f2','sim-f3'];
+  const target = cards[Math.floor(Math.random()*3)];
+  document.getElementById(target).classList.add('tampered');
+  document.getElementById('simBind').classList.remove('linked');
+  document.getElementById('simBind').classList.add('broken');
+  document.getElementById('simBind').textContent = 'BROKEN!';
+  log('[ATTACK] File modified in transit!', 'err');
+  log('[BINDING] Hash mismatch! Expected: a3f7... Got: 8e2d...', 'err');
+  log('[SYSTEM] DECRYPTION BLOCKED. Tamper evident.', 'err');
+  setTimeout(()=>{
+    document.getElementById(target).classList.remove('tampered');
+    document.getElementById('simBind').classList.remove('broken');
+    document.getElementById('simBind').classList.add('linked');
+    document.getElementById('simBind').textContent = 'BOUND';
+    log('[RECOVERY] Integrity restored. Binding valid.', 'ok');
+  }, 4000);
+}
+
+function simScenario(n){
+  const logEl = document.getElementById('scenarioLog');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+  const scenarios = {
+    1: [
+      ['[SCENARIO 1] Wrong Diagnosis','err'],
+      ['Patient A: tumor | Patient B: migraine','info'],
+      ['[ATTACK] Report-B swapped onto Scan-A','err'],
+      ['[WITHOUT BINDING] System accepts the pair','warn'],
+      ['[RESULT] Doctor sees clean scan + tumor report → orders surgery','err'],
+      ['[WITH BINDING] Hash mismatch → ALERT → swap detected','ok']
+    ],
+    2: [
+      ['[SCENARIO 2] Silent Edit','err'],
+      ['[ATTACK] Dosage changed: 10mg → 100mg in metadata','err'],
+      ['[WITHOUT GCM] Decryption succeeds, modified data accepted','warn'],
+      ['[RESULT] 10x overdose administered to patient','err'],
+      ['[WITH AES-GCM] Auth tag mismatch → ALERT → file rejected','ok']
+    ],
+    3: [
+      ['[SCENARIO 3] Identity Swap','err'],
+      ['[ATTACK] Celebrity patient info replaced with fake identity','err'],
+      ['[WITHOUT BINDING] Scan+report still match → basic check passes','warn'],
+      ['[RESULT] Medical record attributed to wrong person','err'],
+      ['[WITH BINDING] Metadata hash mismatch → ALERT → fraud detected','ok']
+    ]
+  };
+  scenarios[n].forEach(([msg,type],i)=>{
+    setTimeout(()=>{
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const c = {ok:'log-ok',warn:'log-warn',err:'log-err',info:'log-info'}[type];
+      entry.innerHTML = `<span class="${c}">${msg}</span>`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }, i*600);
+  });
+}
+
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('[data-tip]').forEach(el=>{
+  el.addEventListener('mouseenter',e=>{
+    tooltip.innerHTML = `<strong>${el.dataset.tipTitle||''}</strong>${el.dataset.tip}`;
+    tooltip.classList.add('show');
+  });
+  el.addEventListener('mousemove',e=>{
+    tooltip.style.left = e.pageX+12+'px'; tooltip.style.top = e.pageY+12+'px';
+  });
+  el.addEventListener('mouseleave',()=>tooltip.classList.remove('show'));
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') goTo(Math.min(currentScene+1, scenes.length-1));
+  if(e.key==='ArrowLeft') goTo(Math.max(currentScene-1, 0));
+});
+
+simReset();
+</script>
+</body>
+</html>

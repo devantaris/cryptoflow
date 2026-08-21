@@ -1,0 +1,14 @@
+{
+  "patient_id": "P-83209",
+  "name": "Sofia Rivera",
+  "dob": "1971-09-20",
+  "sex": "F",
+  "blood_type": "O+",
+  "allergies": [],
+  "weight_kg": 73,
+  "height_cm": 199,
+  "dosage_mg": 60,
+  "insurance_id": "INS-978824",
+  "referring_physician": "Dr. Mueller, MD",
+  "study_date": "2026-08-19"
+}

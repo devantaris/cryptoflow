@@ -1,0 +1,24 @@
+RADIOLOGY REPORT
+========================================
+Patient: Anika Santos
+DOB: 1964-03-22
+Study: CT Chest with contrast
+Date: 2026-08-21
+
+CLINICAL HISTORY:
+Evaluation for suspected pulmonary pathology.
+
+TECHNIQUE:
+Helical CT of the chest was performed with intravenous contrast.
+
+FINDINGS:
+Calcified granuloma in right upper lobe, likely benign.
+
+IMPRESSION:
+Fracture of the 7th rib, posterolateral aspect.
+
+RECOMMENDATION:
+Continue current management. No acute intervention needed.
+
+Signed: Dr. Patel, MD
+Report ID: RPT-17943

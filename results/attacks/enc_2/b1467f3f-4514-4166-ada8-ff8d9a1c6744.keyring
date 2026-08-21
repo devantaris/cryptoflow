@@ -1,0 +1,22 @@
+{
+  "bundle_id": "b1467f3f-4514-4166-ada8-ff8d9a1c6744",
+  "keys": [
+    {
+      "key": "59d0d21865cf7a4dc5261cb07097da38b0cde6d0efaee1dacc57d2927f500595",
+      "iv": "e21b3d6630405843038a8b54",
+      "modality_type": "image"
+    },
+    {
+      "key": "f68f59c63a3e9fd2e7badfb0c0e45a9fe38e6df10cca95dbb1a8359097d2317f",
+      "iv": "5f12273f7d0445e44e9a7a9d",
+      "modality_type": "metadata"
+    },
+    {
+      "key": "5cea5d32ada185941281d0cb581c8655180d1d3d0c059cada71a2d95bffb410a",
+      "iv": "92a0eb14364f52450e0177db",
+      "modality_type": "text"
+    }
+  ],
+  "binding_key": "4a10b6e9395c78a9eb67a19715000d39effac4766332d6523760a01ea60eeb62",
+  "created_at": "2026-08-21T15:55:29.709101+00:00"
+}
