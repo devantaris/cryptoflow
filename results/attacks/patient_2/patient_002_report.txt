@@ -1,9 +1,9 @@
 RADIOLOGY REPORT
 ========================================
-Patient: Anika Williams
-DOB: 1964-11-25
-Study: CT Chest with contrast
-Date: 2026-08-24
+Patient: Omar Kim
+DOB: 1960-10-28
+Study: Chest X-ray PA and Lateral
+Date: 2026-08-16
 
 CLINICAL HISTORY:
 Evaluation for suspected pulmonary pathology.
@@ -18,7 +18,7 @@ IMPRESSION:
 Normal cardiac silhouette. Clear lungs bilaterally.
 
 RECOMMENDATION:
-Follow-up CT in 3 months recommended.
+No further imaging needed at this time.
 
-Signed: Dr. Santos, MD
-Report ID: RPT-27020
+Signed: Dr. Mueller, MD
+Report ID: RPT-84761

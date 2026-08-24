@@ -33,6 +33,14 @@ ENV/
 htmlcov/
 .pytest_cache/
 
+# User test directories
+my_patients/
+my_encrypted_vault/
+my_restored_files/
+web_encrypted/
+decrypted/
+encrypted/
+
 # IDE
 .vscode/
 .idea/
