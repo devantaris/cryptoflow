@@ -23,11 +23,11 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500 selection:text-white pb-16">
-      {/* Background Interactive Particle Network */}
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100 pb-12">
+      {/* Background Interactive Starfield / Ambient Mesh */}
       <ParticleCanvas />
 
-      {/* Glassmorphic Global Header */}
+      {/* Global Navbar */}
       <Header
         currentView={currentView}
         onSelectView={setCurrentView}
@@ -36,7 +36,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main View Port */}
-      <main className="relative z-10 pt-20 px-4">
+      <main className="relative z-10 pt-16 px-4 md:px-6">
         {currentView === 'encrypt' && (
           <EncryptionStudio
             onEncryptComplete={(res) => {
@@ -61,7 +61,7 @@ export const App: React.FC = () => {
         {currentView === 'metrics' && <MetricsDashboard />}
       </main>
 
-      {/* Cryptographic Standard Footer */}
+      {/* Footer */}
       <Footer />
     </div>
   );

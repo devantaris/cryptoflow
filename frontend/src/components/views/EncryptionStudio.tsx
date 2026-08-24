@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, ArrowRight, ShieldAlert, CheckCircle2, Info } from 'lucide-react';
+import { Sparkles, Lock, ArrowRight, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { DicomViewer } from '../shared/DicomViewer';
 import type { EncryptResult } from '../../types';
 import { encryptBundle, generateSyntheticData } from '../../services/api';
@@ -72,68 +72,68 @@ export const EncryptionStudio: React.FC<EncryptionStudioProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Prominent Info Banner */}
-      <div className="mb-8 p-4 rounded-xl bg-emerald-950/30 border border-emerald-900 flex items-start gap-3">
-        <Info className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+    <div className="max-w-6xl mx-auto py-6">
+      {/* Top Banner / Hero */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-7 pb-5 border-b border-zinc-800/80">
         <div>
-          <h2 className="text-emerald-100 font-medium mb-1">What does this page do?</h2>
-          <p className="text-emerald-400/80 text-sm">
-            Here you can combine three different types of patient data (Image, Text Report, and JSON Metadata) into a single, highly secure, encrypted bundle.
-          </p>
-        </div>
-      </div>
-
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-800">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              Stage 01 Ingest
+            </span>
+            <span className="text-zinc-500 text-xs">•</span>
+            <span className="text-zinc-400 text-xs font-mono">Heterogeneous Multimodal Packaging</span>
+          </div>
+          <h1 className="text-xl md:text-2xl font-semibold text-zinc-100 tracking-tight">
             Encryption Studio
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Securely package multimodal medical records.
+          <p className="text-xs md:text-sm text-zinc-400 mt-1 max-w-2xl leading-relaxed">
+            Configure disparate medical data modalities into an atomic, tamper-evident container with deterministic cross-modal cryptographic binding.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 self-start md:self-auto">
           <button
             onClick={handleLoadSample}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer"
+            className="btn-secondary px-3.5 py-2 text-xs font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Load Sample Data</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Load Clinical Sample</span>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-950/80 border border-red-900 text-red-300 text-sm flex items-center gap-3">
-          <ShieldAlert className="w-5 h-5 text-red-400 flex-shrink-0" />
+        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-mono flex items-center gap-3">
+          <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* 3 Modality Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
         {/* Modality A: Medical Image / DICOM */}
-        <div className="glass-panel bg-slate-900 rounded-2xl p-5 border border-slate-700/50 flex flex-col justify-between">
+        <div className="surface-card surface-card-hover rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center mb-4 gap-3">
-              <div className="w-10 h-10 rounded-full bg-cyan-950 text-cyan-400 flex items-center justify-center font-bold text-lg border border-cyan-900">
-                A
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-md bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold flex items-center justify-center border border-zinc-700">
+                  A
+                </span>
+                <h3 className="font-medium text-xs text-zinc-200 uppercase tracking-wider font-mono">
+                  Radiology Imaging
+                </h3>
               </div>
-              <div>
-                <h3 className="font-display font-semibold text-base text-white">Imaging Data</h3>
-                <p className="text-xs text-slate-500">DICOM / PNG Files</p>
-              </div>
+              <span className="badge-neutral text-[10px] font-mono px-2 py-0.5 rounded">
+                DICOM / 512px
+              </span>
             </div>
 
             <DicomViewer filename={imageFilename} />
 
-            <div className="mt-4">
-              <label className="block text-xs text-slate-400 mb-1.5">
-                Upload Custom Scan File:
+            <div className="mt-3.5">
+              <label className="block text-[11px] font-mono text-zinc-400 mb-1.5">
+                Custom Scan Upload:
               </label>
               <input
                 type="file"
@@ -144,121 +144,126 @@ export const EncryptionStudio: React.FC<EncryptionStudioProps> = ({
                     setImageFilename(e.target.files[0].name);
                   }
                 }}
-                className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-800 file:text-cyan-400 hover:file:bg-slate-700 cursor-pointer"
+                className="w-full text-xs font-mono text-zinc-400 file:mr-2.5 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-medium file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
-            <span className="tooltip-trigger">
-              Header size: 64B
-              <span className="tooltip-content">Standardized binary header for routing</span>
-            </span>
+          <div className="mt-4 pt-3 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500 flex justify-between items-center">
+            <span>64-Byte Normalization</span>
             <span className="text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" /> Validated
+              <CheckCircle2 className="w-3 h-3" /> Validated
             </span>
           </div>
         </div>
 
         {/* Modality B: Radiology Report */}
-        <div className="glass-panel bg-slate-900 rounded-2xl p-5 border border-slate-700/50 flex flex-col justify-between">
+        <div className="surface-card surface-card-hover rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center mb-4 gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-950 text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-900">
-                B
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-md bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold flex items-center justify-center border border-zinc-700">
+                  B
+                </span>
+                <h3 className="font-medium text-xs text-zinc-200 uppercase tracking-wider font-mono">
+                  Clinical Impression
+                </h3>
               </div>
-              <div>
-                <h3 className="font-display font-semibold text-base text-white">Clinical Report</h3>
-                <p className="text-xs text-slate-500">Text Notes</p>
-              </div>
+              <span className="badge-neutral text-[10px] font-mono px-2 py-0.5 rounded">
+                UTF-8 Text
+              </span>
             </div>
 
-            <label className="block text-xs text-slate-400 mb-1.5">
-              Radiology Impression & Diagnosis:
+            <label className="block text-[11px] font-mono text-zinc-400 mb-1.5">
+              Diagnostic Findings & Summary:
             </label>
             <textarea
-              rows={11}
+              rows={10}
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-amber-400 transition leading-relaxed resize-none"
-              placeholder="Enter clinical findings..."
+              className="w-full bg-zinc-950/70 border border-zinc-800 focus:border-zinc-600 rounded-lg p-3 text-xs font-mono text-zinc-200 focus:outline-none transition leading-relaxed resize-none"
+              placeholder="Enter clinical report..."
             />
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
-            <span>Size: {reportText.length} bytes</span>
+          <div className="mt-4 pt-3 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500 flex justify-between items-center">
+            <span>Payload: {reportText.length} bytes</span>
             <span className="text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" /> Validated
+              <CheckCircle2 className="w-3 h-3" /> Validated
             </span>
           </div>
         </div>
 
         {/* Modality C: EHR Metadata */}
-        <div className="glass-panel bg-slate-900 rounded-2xl p-5 border border-slate-700/50 flex flex-col justify-between">
+        <div className="surface-card surface-card-hover rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center mb-4 gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-950 text-purple-400 flex items-center justify-center font-bold text-lg border border-purple-900">
-                C
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-md bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold flex items-center justify-center border border-zinc-700">
+                  C
+                </span>
+                <h3 className="font-medium text-xs text-zinc-200 uppercase tracking-wider font-mono">
+                  EHR Demographics
+                </h3>
               </div>
-              <div>
-                <h3 className="font-display font-semibold text-base text-white">Patient Metadata</h3>
-                <p className="text-xs text-slate-500">Structured JSON</p>
-              </div>
+              <span className="badge-neutral text-[10px] font-mono px-2 py-0.5 rounded">
+                FHIR JSON
+              </span>
             </div>
 
-            <label className="block text-xs text-slate-400 mb-1.5">
-              Structured EHR Details:
+            <label className="block text-[11px] font-mono text-zinc-400 mb-1.5">
+              Structured Patient Attributes:
             </label>
             <textarea
-              rows={11}
+              rows={10}
               value={metadataJson}
               onChange={(e) => setMetadataJson(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-purple-400 transition leading-relaxed resize-none"
+              className="w-full bg-zinc-950/70 border border-zinc-800 focus:border-zinc-600 rounded-lg p-3 text-xs font-mono text-zinc-200 focus:outline-none transition leading-relaxed resize-none"
               placeholder="Enter JSON metadata..."
             />
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
-            <span>Size: {metadataJson.length} bytes</span>
+          <div className="mt-4 pt-3 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500 flex justify-between items-center">
+            <span>Schema: {metadataJson.length} bytes</span>
             <span className="text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" /> Validated
+              <CheckCircle2 className="w-3 h-3" /> Validated
             </span>
           </div>
         </div>
       </div>
 
-      {/* Configuration & Action Bar */}
-      <div className="glass-panel bg-slate-900 rounded-2xl p-6 border border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex flex-wrap items-center gap-6 w-full md:w-auto">
+      {/* Action Bar */}
+      <div className="surface-card rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Bundle Name (Identifier):</label>
+            <label className="block text-[11px] font-mono text-zinc-400 mb-1">Bundle Descriptor</label>
             <input
               type="text"
               value={bundleName}
               onChange={(e) => setBundleName(e.target.value)}
-              className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400 w-64"
+              className="bg-zinc-950 border border-zinc-800 focus:border-zinc-600 rounded-md px-3 py-1.5 text-xs font-mono text-zinc-100 focus:outline-none w-56"
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer mt-4 md:mt-0">
+          <label className="flex items-center gap-2 cursor-pointer mt-4 md:mt-0 select-none">
             <input
               type="checkbox"
               checked={anonymize}
               onChange={(e) => setAnonymize(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-0 cursor-pointer"
             />
-            <span className="text-sm text-slate-300">Remove Patient Names (Anonymize)</span>
+            <span className="text-xs font-mono text-zinc-300">Anonymize PHI Fields</span>
           </label>
         </div>
 
         <button
           onClick={handleEncrypt}
           disabled={loading}
-          className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition cursor-pointer disabled:opacity-50"
+          className="btn-primary px-6 py-2.5 text-xs font-medium flex items-center gap-2 cursor-pointer w-full md:w-auto justify-center disabled:opacity-50"
         >
-          <Lock className="w-4 h-4" />
-          <span>{loading ? 'Encrypting Data...' : 'Encrypt & Package Bundle'}</span>
-          <ArrowRight className="w-4 h-4" />
+          <Lock className="w-3.5 h-3.5" />
+          <span>{loading ? 'Encrypting & Binding...' : 'Encrypt & Seal Bundle'}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
