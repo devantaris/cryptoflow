@@ -246,5 +246,18 @@ def benchmark_cmd(
         runner.cleanup()
 
 
+@app.command("serve")
+def serve_cmd(
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Bind network interface host"),
+    port: int = typer.Option(8000, "--port", "-p", help="Server port"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Auto-reload on code change"),
+) -> None:
+    """Launch the CryptoFlow Web Application & API Server."""
+    import uvicorn
+    console.print(Panel.fit(f"[bold cyan]Launching CryptoFlow Platform[/bold cyan]\n[green]http://{host}:{port}[/green]"))
+    uvicorn.run("cryptoflow.server:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     app()
+

@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian-950: #0A0F1C;
+  --color-obsidian-900: #0F172A;
+  --color-obsidian-850: #151F33;
+  --color-obsidian-800: #1E293B;
+  --color-obsidian-700: #334155;
+  --color-obsidian-600: #475569;
+
+  --color-cyan-300: #67E8F9;
+  --color-cyan-400: #22D3EE;
+  --color-cyan-500: #06B6D4;
+  --color-cyan-600: #0891B2;
+
+  --color-amber-300: #FCD34D;
+  --color-amber-400: #FBBF24;
+  --color-amber-500: #F59E0B;
+  --color-amber-600: #D97706;
+
+  --color-emerald-300: #6EE7B7;
+  --color-emerald-400: #34D399;
+  --color-emerald-500: #10B981;
+  --color-emerald-600: #059669;
+
+  --color-crimson-300: #FCA5A5;
+  --color-crimson-400: #F87171;
+  --color-crimson-500: #EF4444;
+  --color-crimson-600: #DC2626;
+
+  --color-purple-400: #C084FC;
+  --color-purple-500: #A855F7;
+  --color-purple-600: #9333EA;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: #0A0F1C;
+    color: #E2E8F0;
+    font-family: var(--font-sans);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0A0F1C;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.shadow-glow-cyan {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+}
+
+.shadow-glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.shadow-glow-emerald {
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+}
+
+.shadow-glow-crimson {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.55);
+}
+
+@keyframes sealPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4)); }
+  50% { transform: scale(1.04); filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.7)); }
+}
+
+@keyframes alarmPulse {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+  50% { border-color: rgba(239, 68, 68, 0.9); box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+}
+
+.animate-seal-pulse {
+  animation: sealPulse 2s ease-in-out infinite;
+}
+
+.animate-alarm-pulse {
+  animation: alarmPulse 0.6s ease-in-out infinite;
+}
