@@ -161,7 +161,8 @@ class AttackSimulator:
             ModalityType.METADATA: raw_files["metadata"],
         }
         enc_dir = self.work_dir / f"enc_{patient_idx}"
-        return encrypt_pipeline(file_paths, enc_dir)
+        bundle, key, _ = encrypt_pipeline(file_paths, enc_dir)
+        return bundle, key
 
     def run_bit_flip_attack(
         self, bundle_path: Path, keyring_path: Path

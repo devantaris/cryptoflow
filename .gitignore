@@ -41,6 +41,17 @@ web_encrypted/
 decrypted/
 encrypted/
 
+# Web storage (runtime vault — not source code)
+web_storage/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# Dataset folders
+data/
+datasets/
+
 # IDE
 .vscode/
 .idea/

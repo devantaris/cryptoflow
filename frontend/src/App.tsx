@@ -23,7 +23,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-obsidian-950 text-slate-200 font-sans selection:bg-cyan-500 selection:text-black pb-16">
+    <div className="relative min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500 selection:text-white pb-16">
       {/* Background Interactive Particle Network */}
       <ParticleCanvas />
 

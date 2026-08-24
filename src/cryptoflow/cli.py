@@ -74,7 +74,7 @@ def encrypt_cmd(
     console.print(Panel.fit("[bold cyan]CryptoFlow Encryption Pipeline[/bold cyan]\n[dim]Atomic Multimodal Packaging[/dim]"))
 
     try:
-        bundle_path, keyring_path = encrypt_pipeline(file_paths, output)
+        bundle_path, keyring_path, _ = encrypt_pipeline(file_paths, output)
 
         table = Table(title="Bundle Details", show_header=True, header_style="bold magenta")
         table.add_column("Artifact", style="cyan")

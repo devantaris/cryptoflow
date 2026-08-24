@@ -19,24 +19,21 @@ logger = logging.getLogger(__name__)
 def bind(
     encrypted_blobs: list[EncryptedBlob],
     binding_key: bytes,
-) -> bytes:
-    """Compute the cross-modal HMAC-SHA-256 binding hash.
-
-    Args:
-        encrypted_blobs: All encrypted blobs in this bundle.
-        binding_key: 32-byte HMAC key from the KeyRing.
-
-    Returns:
-        32-byte HMAC-SHA-256 digest that covers every blob.
-    """
+) -> tuple[bytes, dict]:
+    """Compute the cross-modal HMAC-SHA-256 binding hash and details."""
     binding_hash = compute_binding_hash(binding_key, encrypted_blobs)
+
+    details = {
+        "modalities": [blob.modality_type.value for blob in encrypted_blobs],
+        "count": len(encrypted_blobs)
+    }
 
     logger.info(
         "[BIND] Binding hash computed over %d blobs: %s...",
         len(encrypted_blobs),
         binding_hash.hex()[:16],
     )
-    return binding_hash
+    return binding_hash, details
 
 
 def verify_binding(

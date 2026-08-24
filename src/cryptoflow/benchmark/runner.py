@@ -97,7 +97,7 @@ class BenchmarkRunner:
         # 2. Encrypt
         enc_dir = test_dir / "encrypted"
         t0 = time.perf_counter()
-        bundle_path, keyring_path = encrypt_pipeline(file_paths, enc_dir)
+        bundle_path, keyring_path, _ = encrypt_pipeline(file_paths, enc_dir)
         enc_time = time.perf_counter() - t0
 
         bundle_size = bundle_path.stat().st_size

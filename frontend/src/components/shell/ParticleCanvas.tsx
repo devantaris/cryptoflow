@@ -45,7 +45,7 @@ export const ParticleCanvas: React.FC = () => {
         this.vx = (Math.random() - 0.5) * 0.4;
         this.vy = (Math.random() - 0.5) * 0.4;
         this.size = Math.random() * 2 + 1;
-        this.baseAlpha = Math.random() * 0.4 + 0.15;
+        this.baseAlpha = Math.random() * 0.2 + 0.1;
       }
 
       update() {
@@ -74,7 +74,7 @@ export const ParticleCanvas: React.FC = () => {
       }
     }
 
-    const particles: Particle[] = Array.from({ length: 55 }, () => new Particle());
+    const particles: Particle[] = Array.from({ length: 30 }, () => new Particle());
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
@@ -89,7 +89,7 @@ export const ParticleCanvas: React.FC = () => {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 140) {
-            const alpha = (1 - dist / 140) * 0.12;
+            const alpha = (1 - dist / 140) * 0.08;
             ctx.strokeStyle = `rgba(34, 211, 238, ${alpha})`;
             ctx.lineWidth = 0.8;
             ctx.beginPath();
@@ -120,7 +120,7 @@ export const ParticleCanvas: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-50"
+      className="fixed inset-0 pointer-events-none z-0 opacity-30"
     />
   );
 };

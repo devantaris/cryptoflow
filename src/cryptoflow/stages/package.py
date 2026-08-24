@@ -63,7 +63,7 @@ def package_bundle(
     binding_hash: bytes,
     original_filenames: dict[ModalityType, str],
     output_dir: Path,
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, dict]:
     """Package encrypted blobs into a .cryptoflow bundle file.
 
     Produces two output files:
@@ -164,4 +164,9 @@ def package_bundle(
         keyring_path.name,
     )
 
-    return bundle_path, keyring_path
+    stats = {
+        "bundle_size_bytes": len(bundle_bytes),
+        "overhead_bytes": len(bundle_bytes) - sum(b.original_size for b in sorted_blobs)
+    }
+
+    return bundle_path, keyring_path, stats

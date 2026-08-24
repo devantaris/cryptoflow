@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Terminal, Flame, Zap } from 'lucide-react';
+import { RotateCcw, Terminal, AlertTriangle, CheckCircle } from 'lucide-react';
 import { WaxSeal } from '../animations/WaxSeal';
 import { simulateAttackApi } from '../../services/api';
 import type { AttackResult } from '../../types';
@@ -9,57 +9,57 @@ export const AttackSandbox: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [attackResult, setAttackResult] = useState<AttackResult | null>(null);
   const [logs, setLogs] = useState<Array<{ text: string; type: 'info' | 'warn' | 'error' | 'success' }>>([
-    { text: '[SANDBOX READY] 7 verified cyberattack vectors armed for threat modeling.', type: 'info' },
+    { text: 'System ready. Select a tampering method to test our defenses.', type: 'info' },
   ]);
 
   const attacks = [
     {
       id: 'bit_flip',
-      name: '1. Bit-Flip Tamper',
-      desc: 'Flips 1 bit in transmitted ciphertext payload to simulate network noise or in-flight modification.',
+      name: '1. Small Data Change (Bit-Flip)',
+      desc: 'Changes a single letter in the file to simulate network errors or quiet tampering.',
       defense: 'GCM Auth Tag Mismatch',
       icon: '💥',
     },
     {
       id: 'swap_modalities',
-      name: '2. Intra-Bundle Swap',
-      desc: 'Adversary swaps the internal ordering of CT scan and radiology report within the container.',
+      name: '2. Rearrange Parts',
+      desc: 'Swaps the order of the Image and Report inside the package.',
       defense: 'Deterministic Binding Order Check',
       icon: '🔀',
     },
     {
       id: 'cross_bundle_swap',
-      name: '3. Cross-Patient Swap',
-      desc: 'CRITICAL THREAT: Replaces Patient A (benign) report with Patient B (malignant) report.',
+      name: '3. Swap Patients',
+      desc: 'Tries to sneak Patient B\'s report into Patient A\'s file.',
       defense: 'HMAC-SHA-256 Digest Mismatch',
       icon: '💀',
     },
     {
       id: 'truncate_blob',
-      name: '4. Network Truncation',
-      desc: 'Simulates packet drop or intentional truncation of trailing 50 bytes of bundle data.',
+      name: '4. Cut Off Data',
+      desc: 'Deletes the end of the file to see if the system notices missing data.',
       defense: 'Binary Header Length Check',
       icon: '✂️',
     },
     {
       id: 'inject_blob',
-      name: '5. Rogue Modality Injection',
-      desc: 'Adversary injects a 4th unauthorized metadata payload into a 3-modality patient bundle.',
-      defense: 'Modality Count & Digest Invalidation',
+      name: '5. Add Fake Data',
+      desc: 'Sneaks extra unapproved data into the bundle.',
+      defense: 'Modality Count Invalidation',
       icon: '💉',
     },
     {
       id: 'manifest_tamper',
-      name: '6. Manifest Forgery',
-      desc: 'Attacker modifies binding hash recorded inside the manifest JSON to match modified payload.',
-      defense: 'Constant-Time Recomputation Check',
+      name: '6. Forge Records',
+      desc: 'Changes the internal checklist to match the tampered data.',
+      defense: 'Constant-Time Check',
       icon: '📝',
     },
     {
       id: 'key_mismatch',
-      name: '7. Foreign Keyring Unlock',
-      desc: 'Attempted unauthorized decryption of Patient A bundle using Patient B key material.',
-      defense: 'UUID & GCM Key Derivation Block',
+      name: '7. Wrong Key',
+      desc: 'Tries to open Patient A\'s file with Patient B\'s key.',
+      defense: 'Key Derivation Block',
       icon: '🗝️',
     },
   ];
@@ -72,8 +72,7 @@ export const AttackSandbox: React.FC = () => {
 
       setLogs((prev) => [
         ...prev,
-        { text: `[ATTACK LAUNCHED] Executing: ${attackName}...`, type: 'warn' },
-        { text: `[SYSTEM] Intercepting payload in transit & attempting unauthorized decryption...`, type: 'info' },
+        { text: `Executing: ${attackName}...`, type: 'warn' },
       ]);
 
       const result = await simulateAttackApi(attackId);
@@ -82,15 +81,15 @@ export const AttackSandbox: React.FC = () => {
       if (result.detected) {
         setLogs((prev) => [
           ...prev,
-          { text: `[SECURITY ENFORCEMENT] ${result.exception_raised} triggered!`, type: 'error' },
-          { text: `[ALARM] Cross-modal wax seal SHATTERED. Decryption BLOCKED immediately.`, type: 'error' },
-          { text: `[RESULT] ${result.forensic_details}`, type: 'success' },
+          { text: `BLOCKED! Reason: ${result.exception_raised}`, type: 'error' },
+          { text: `Seal broken. Access denied.`, type: 'error' },
+          { text: `Details: ${result.forensic_details}`, type: 'success' },
         ]);
       }
     } catch (e: any) {
       setLogs((prev) => [
         ...prev,
-        { text: `[ERROR] Attack simulation failed: ${e.message}`, type: 'error' },
+        { text: `Error running simulation: ${e.message}`, type: 'error' },
       ]);
     } finally {
       setLoading(false);
@@ -100,45 +99,50 @@ export const AttackSandbox: React.FC = () => {
   const handleReset = () => {
     setActiveAttack(null);
     setAttackResult(null);
-    setLogs([{ text: '[SANDBOX RESET] Ready for new attack simulation.', type: 'info' }]);
+    setLogs([{ text: 'Sandbox reset. Ready for testing.', type: 'info' }]);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-obsidian-800">
+      {/* Prominent Educational Demo Banner */}
+      <div className="mb-8 p-4 rounded-xl bg-amber-950/40 border border-amber-500/50 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
-              Live Cyberattack & Threat Sandbox
-            </h1>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-crimson-950/80 text-crimson-400 border border-crimson-800">
-              Active Defense Arena
-            </span>
-          </div>
+          <h2 className="text-amber-300 font-medium mb-1">Educational Demo: All attacks are blocked.</h2>
+          <p className="text-amber-500/80 text-sm">
+            This page shows why encryption matters. Click any of the attacks below to see how our security seal detects and blocks unauthorized changes.
+          </p>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-800">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
+            Threat Sandbox
+          </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Simulate 7 verified cyberattack vectors and observe real-time cryptographic tamper alarms.
+            Test how the system reacts to tampering.
           </p>
         </div>
 
         <button
           onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono bg-obsidian-800 hover:bg-obsidian-700 text-slate-200 border border-obsidian-700 transition cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-4 h-4" />
           <span>Reset Sandbox</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
         {/* Left: 7 Attack Arsenal Grid */}
-        <div className="lg:col-span-7 space-y-3">
-          <h3 className="font-display font-semibold text-sm text-white flex items-center gap-2 mb-3">
-            <Flame className="w-4 h-4 text-crimson-400" />
-            <span>Select Threat Vector to Execute:</span>
+        <div className="lg:col-span-7 space-y-4">
+          <h3 className="font-semibold text-base text-white flex items-center gap-2">
+            <span>Select an attack to try:</span>
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {attacks.map((atk) => {
               const isSelected = activeAttack === atk.id;
               return (
@@ -148,24 +152,20 @@ export const AttackSandbox: React.FC = () => {
                   disabled={loading}
                   className={`text-left p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-crimson-950/40 border-crimson-500 shadow-glow-crimson'
-                      : 'bg-obsidian-900/80 border-obsidian-800 hover:border-crimson-500/50 hover:bg-obsidian-800/60'
+                      ? 'bg-red-950/40 border-red-500 shadow-sm'
+                      : 'bg-slate-900 border-slate-700 hover:border-red-400 hover:bg-slate-800'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-base">{atk.icon}</span>
-                      <span className="text-[10px] font-mono text-crimson-400 bg-crimson-950 px-2 py-0.5 rounded border border-crimson-900">
-                        {atk.defense}
-                      </span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">{atk.icon}</span>
+                      <h4 className="font-semibold text-sm text-white">{atk.name}</h4>
                     </div>
-                    <h4 className="font-display font-semibold text-xs text-white mb-1">{atk.name}</h4>
-                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{atk.desc}</p>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-obsidian-800 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                    <span>Click to Simulate</span>
-                    <Zap className="w-3 h-3 text-crimson-400" />
+                    <p className="text-xs text-slate-400 mb-3">{atk.desc}</p>
+                    <div className="text-[10px] font-mono text-slate-500 tooltip-trigger w-fit">
+                      Defense: {atk.defense}
+                      <span className="tooltip-content">Technical security mechanism</span>
+                    </div>
                   </div>
                 </button>
               );
@@ -174,55 +174,51 @@ export const AttackSandbox: React.FC = () => {
         </div>
 
         {/* Right: Real-time Seal & Bundle Visualizer */}
-        <div className="lg:col-span-5 flex flex-col justify-between glass-panel rounded-2xl p-6 border border-obsidian-700">
+        <div className="lg:col-span-5 flex flex-col justify-between glass-panel bg-slate-900 rounded-2xl p-6 border border-slate-700">
           <div>
-            <h3 className="font-display font-semibold text-sm text-white mb-4 flex items-center justify-between">
-              <span>Cross-Modal Seal Integrity:</span>
-              <span className={`text-xs font-mono font-bold ${activeAttack ? 'text-crimson-400 animate-pulse' : 'text-emerald-400'}`}>
-                {activeAttack ? '🚨 UNDER ATTACK' : '🟢 ARMED & SECURE'}
+            <h3 className="font-semibold text-base text-white mb-6 flex items-center justify-between">
+              <span>System Status:</span>
+              <span className={`text-sm font-bold ${activeAttack ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                {activeAttack ? '🚨 TAMPER DETECTED' : '🟢 SECURE'}
               </span>
             </h3>
 
             {/* Seal Animation */}
-            <div className="py-6 flex justify-center items-center bg-obsidian-950/80 rounded-xl border border-obsidian-800 mb-6 min-h-[160px]">
-              <WaxSeal status={activeAttack ? 'broken' : 'intact'} size={100} label="HMAC SEAL INTACT" />
+            <div className="py-8 flex justify-center items-center bg-slate-950 rounded-xl border border-slate-800 mb-6 min-h-[200px]">
+              <WaxSeal status={activeAttack ? 'broken' : 'intact'} size={120} label="SECURITY SEAL" />
             </div>
 
             {/* Scorecard */}
             {attackResult && (
-              <div className="p-4 rounded-xl bg-crimson-950/60 border border-crimson-700 text-xs font-mono space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Triggered Control:</span>
-                  <span className="text-crimson-300 font-bold">{attackResult.exception_raised}</span>
+              <div className="p-4 rounded-xl bg-red-950/30 border border-red-900/50 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">Result:</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1"><CheckCircle className="w-4 h-4"/> BLOCKED</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Security Score:</span>
-                  <span className="text-emerald-400 font-bold">100% BLOCKED (PASS)</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">Trigger:</span>
+                  <span className="text-red-300 font-mono text-xs">{attackResult.exception_raised}</span>
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="text-[11px] font-mono text-slate-500 pt-4 border-t border-obsidian-800">
-            Protected against Mix-and-Match, Patient Swapping, and Silent Byte Tampering.
           </div>
         </div>
       </div>
 
       {/* Forensic Log Stream */}
-      <div className="glass-panel rounded-2xl p-5 border border-obsidian-700">
-        <div className="flex items-center gap-2 mb-3 text-xs font-mono text-slate-400">
-          <Terminal className="w-4 h-4 text-cyan-400" />
-          <span>Real-Time Forensic Audit Stream:</span>
+      <div className="glass-panel bg-slate-900 rounded-2xl p-5 border border-slate-700">
+        <div className="flex items-center gap-2 mb-3 text-sm text-slate-300">
+          <Terminal className="w-4 h-4" />
+          <span>System Activity Log:</span>
         </div>
 
-        <div className="bg-obsidian-950 rounded-xl p-4 border border-obsidian-800 max-h-48 overflow-y-auto font-mono text-xs space-y-1.5">
+        <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 max-h-48 overflow-y-auto font-mono text-sm space-y-2">
           {logs.map((l, i) => (
             <div
               key={i}
               className={
                 l.type === 'error'
-                  ? 'text-crimson-400 font-bold'
+                  ? 'text-red-400 font-bold'
                   : l.type === 'warn'
                   ? 'text-amber-400'
                   : l.type === 'success'

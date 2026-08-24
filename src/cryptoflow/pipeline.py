@@ -23,32 +23,14 @@ from cryptoflow.utils.io import format_size
 logger = logging.getLogger(__name__)
 
 
+from typing import Optional, Callable
+
 def encrypt_pipeline(
     file_paths: dict[ModalityType, Path],
     output_dir: Path,
-) -> tuple[Path, Path]:
-    """Run the full 5-stage encryption pipeline.
-
-    Stages executed in order:
-
-    1. **Ingest** — normalise files into binary blobs
-    2. **KeyGen** — generate per-file AES-256 keys + HMAC key
-    3. **Encrypt** — AES-256-GCM each blob
-    4. **Bind** — HMAC-SHA-256 cross-modal binding
-    5. **Package** — write .cryptoflow bundle + .keyring
-
-    Args:
-        file_paths: Mapping of modality type to input file path.
-            Must contain at least one entry.
-        output_dir: Directory to write output files.
-
-    Returns:
-        Tuple of ``(bundle_path, keyring_path)``.
-
-    Raises:
-        IngestError: If any input file is invalid.
-        EncryptionError: If encryption fails.
-    """
+    progress_callback: Optional[Callable[[int, str, dict], None]] = None
+) -> tuple[Path, Path, dict]:
+    """Run the full 5-stage encryption pipeline."""
     t_start = time.perf_counter()
 
     total_input = sum(
@@ -59,26 +41,37 @@ def encrypt_pipeline(
         len(file_paths),
         format_size(total_input),
     )
+    
+    if progress_callback:
+        progress_callback(0, "Started", {"files": len(file_paths), "size": total_input})
 
     # Stage 1: Ingest
     t1 = time.perf_counter()
     blobs = ingest(file_paths)
     dt1 = time.perf_counter() - t1
+    if progress_callback:
+        progress_callback(1, "Ingest & Normalization", {"blobs": len(blobs), "time_s": dt1})
 
     # Stage 2: Key Generation
     t2 = time.perf_counter()
     keyring = generate_keys(blobs)
     dt2 = time.perf_counter() - t2
+    if progress_callback:
+        progress_callback(2, "CSPRNG Key Generation", {"keys": len(blobs) + 1, "time_s": dt2})
 
     # Stage 3: Encrypt
     t3 = time.perf_counter()
     encrypted = encrypt_blobs(blobs, keyring)
     dt3 = time.perf_counter() - t3
+    if progress_callback:
+        progress_callback(3, "AES-256-GCM Encryption", {"encrypted_blobs": len(encrypted), "time_s": dt3})
 
     # Stage 4: Binding
     t4 = time.perf_counter()
-    binding_hash = bind(encrypted, keyring.binding_key)
+    binding_hash, binding_details = bind(encrypted, keyring.binding_key)
     dt4 = time.perf_counter() - t4
+    if progress_callback:
+        progress_callback(4, "Cross-Modal Binding Hash", {"hash": binding_hash.hex(), "details": binding_details, "time_s": dt4})
 
     # Build original filenames map for packaging
     original_filenames: dict[ModalityType, str] = {
@@ -87,10 +80,12 @@ def encrypt_pipeline(
 
     # Stage 5: Package
     t5 = time.perf_counter()
-    bundle_path, keyring_path = package_bundle(
+    bundle_path, keyring_path, package_stats = package_bundle(
         encrypted, keyring, binding_hash, original_filenames, output_dir
     )
     dt5 = time.perf_counter() - t5
+    if progress_callback:
+        progress_callback(5, "Binary Packaging & Split Courier", {"bundle": bundle_path.name, "stats": package_stats, "time_s": dt5})
 
     dt_total = time.perf_counter() - t_start
 
@@ -100,10 +95,15 @@ def encrypt_pipeline(
         "bind=%.3fs, package=%.3fs)",
         dt_total, dt1, dt2, dt3, dt4, dt5,
     )
-    logger.info(
-        "[PIPELINE] Output: %s | Keys: %s",
-        bundle_path.name,
-        keyring_path.name,
-    )
+    
+    metadata = {
+        "total_input_size_bytes": total_input,
+        "file_count": len(file_paths),
+        "package_stats": package_stats,
+        "binding_details": binding_details
+    }
+    
+    from cryptoflow.utils.stats import record_encryption
+    record_encryption(package_stats["bundle_size_bytes"])
 
-    return bundle_path, keyring_path
+    return bundle_path, keyring_path, metadata

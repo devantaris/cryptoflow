@@ -29,7 +29,9 @@ from fastapi import (
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
+    Request,
 )
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -72,6 +74,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    logger.info(f"{request.method} {request.url.path} - {response.status_code} - {duration:.4f}s")
+    return response
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": True, "error_code": "HTTP_ERROR", "message": exc.detail, "suggestion": "Check request parameters and try again."}
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    msg = ", ".join([f"{e['loc'][-1]}: {e['msg']}" for e in errors])
+    return JSONResponse(
+        status_code=422,
+        content={"error": True, "error_code": "VALIDATION_ERROR", "message": msg, "suggestion": "Fix the fields mentioned in the message."}
+    )
 
 # Persistent storage directories
 STORAGE_DIR = Path("./web_storage").resolve()
@@ -124,6 +150,28 @@ async def health_check() -> dict:
         "version": "0.1.0",
         "timestamp": time.time(),
     }
+
+
+@app.get("/api/v1/bundle-info")
+async def get_bundle_info() -> dict:
+    """List all bundles in vault with sizes and creation times."""
+    bundles = []
+    if VAULT_DIR.exists():
+        for file in VAULT_DIR.glob("*.cryptoflow"):
+            stat = file.stat()
+            bundles.append({
+                "filename": file.name,
+                "size_bytes": stat.st_size,
+                "creation_time": stat.st_ctime
+            })
+    return {"success": True, "bundles": bundles}
+
+
+@app.get("/api/v1/stats")
+async def get_stats_endpoint() -> dict:
+    """Return platform usage stats."""
+    from cryptoflow.utils.stats import get_stats
+    return {"success": True, "stats": get_stats()}
 
 
 @app.post("/api/v1/generate-synthetic")
@@ -234,7 +282,7 @@ async def encrypt_endpoint(
 
         # Run Core Pipeline
         t0 = time.perf_counter()
-        bundle_path, keyring_path = encrypt_pipeline(file_paths, VAULT_DIR)
+        bundle_path, keyring_path, metadata_dict = encrypt_pipeline(file_paths, VAULT_DIR)
         duration = time.perf_counter() - t0
 
         # Read keyring to extract metadata for visualizer
@@ -377,6 +425,10 @@ async def simulate_attack_endpoint(req: AttackRequest) -> dict:
             res = simulator.run_key_mismatch_attack(bundle_a, key_b)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown attack type: {req.attack_type}")
+
+        if res.success:
+            from cryptoflow.utils.stats import record_attack_blocked
+            record_attack_blocked()
 
         return {
             "success": True,

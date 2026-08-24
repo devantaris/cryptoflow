@@ -510,45 +510,59 @@ def build_journal_document(output_path: Path, project_root: Path) -> None:
     doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     # Embed generated plots
-    plots_dir = project_root / "results" / "plots"
-    p_tp = plots_dir / "throughput_analysis.png"
-    p_lat = plots_dir / "latency_analysis.png"
-    p_ov = plots_dir / "overhead_analysis.png"
+    diagrams_dir = project_root / "results" / "diagrams"
+    
+    diagrams_to_add = [
+        ("architecture_overview.png", "Figure 1: System Architecture Overview", "Fig 1. High-level architecture showing how diverse patient files are transformed by the CryptoFlow engine into a unified, tamper-proof .cryptoflow bundle."),
+        ("pipeline_flowchart.png", "Figure 2: 5-Stage Pipeline Flowchart", "Fig 2. The sequential deterministic 5-stage pipeline. It shows the flow from ingestion and normalization, through key generation and GCM encryption, ending in cross-modal binding and packaging."),
+        ("key_hierarchy.png", "Figure 3: Cryptographic Key Hierarchy", "Fig 3. The deterministic key derivation tree. A root entropy source generates distinct sub-keys for each modality (Image, Text, Metadata) and a master HMAC key for final binding."),
+        ("bundle_format.png", "Figure 4: Bundle Binary Format Layout", "Fig 4. Byte-level layout of the custom binary container. It features a fixed 64-byte magic header, a variable-length JSON manifest, and concatenated ciphertext blobs."),
+        ("attack_matrix.png", "Figure 5: Attack Threat Model Matrix", "Fig 5. A 7x5 evaluation matrix mapping specific threat vectors against the pipeline's defense stages. Green indicates successful automated mitigation (BLOCKED)."),
+        ("performance_scaling.png", "Figure 6: Performance Scaling Chart", "Fig 6. Empirical throughput measurements (MB/s) for both encryption and decryption as the input bundle size scales from 100KB to 25MB."),
+        ("latency_waterfall.png", "Figure 7: Latency Breakdown Waterfall", "Fig 7. Horizontal bar chart illustrating the relative latency contribution of each pipeline stage. Stage 3 (Encryption) understandably dominates the computation time."),
+        ("security_comparison.png", "Figure 8: Security Comparison Table", "Fig 8. A multidimensional security and efficiency comparison against common baselines. CryptoFlow uniquely excels across confidentiality, integrity, and cross-modal binding with negligible overhead.")
+    ]
 
-    if p_tp.exists():
-        h2 = doc.add_heading("Figure 1: Throughput Scaling vs. Input Data Size", level=2)
-        h2.paragraph_format.space_before = Pt(10)
-        h2.paragraph_format.space_after = Pt(4)
-        doc.add_picture(str(p_tp), width=Inches(6.0))
-        p_cap = doc.add_paragraph("Fig 1. Encryption and decryption throughput (MB/s) showing rapid convergence toward hardware-limited bandwidth (>130 MB/s).")
-        p_cap.paragraph_format.space_after = Pt(12)
-        p_cap.runs[0].font.size = Pt(9)
-        p_cap.runs[0].font.italic = True
+    for fname, dtitle, dcap in diagrams_to_add:
+        p_path = diagrams_dir / fname
+        if p_path.exists():
+            h2 = doc.add_heading(dtitle, level=2)
+            h2.paragraph_format.space_before = Pt(10)
+            h2.paragraph_format.space_after = Pt(4)
+            doc.add_picture(str(p_path), width=Inches(6.0))
+            p_cap = doc.add_paragraph(dcap)
+            p_cap.paragraph_format.space_after = Pt(12)
+            p_cap.runs[0].font.size = Pt(9)
+            p_cap.runs[0].font.italic = True
 
-    if p_lat.exists():
-        h2 = doc.add_heading("Figure 2: Execution Latency by Medical Bundle Size", level=2)
-        h2.paragraph_format.space_before = Pt(10)
-        h2.paragraph_format.space_after = Pt(4)
-        doc.add_picture(str(p_lat), width=Inches(6.0))
-        p_cap = doc.add_paragraph("Fig 2. Sub-second execution latency across all clinical dataset tiers, demonstrating suitability for synchronous emergency transmissions.")
-        p_cap.paragraph_format.space_after = Pt(12)
-        p_cap.runs[0].font.size = Pt(9)
-        p_cap.runs[0].font.italic = True
+    h1 = doc.add_heading("8. Recommended Evaluation Datasets", level=1)
+    h1.paragraph_format.space_before = Pt(14)
+    h1.paragraph_format.space_after = Pt(6)
 
-    if p_ov.exists():
-        h2 = doc.add_heading("Figure 3: Storage Overhead Analysis", level=2)
-        h2.paragraph_format.space_before = Pt(10)
-        h2.paragraph_format.space_after = Pt(4)
-        doc.add_picture(str(p_ov), width=Inches(6.0))
-        p_cap = doc.add_paragraph("Fig 3. Storage overhead percentage asymptotically approaching 0.00% for realistic clinical scans (>10 MB) due to constant header sizes.")
-        p_cap.paragraph_format.space_after = Pt(12)
-        p_cap.runs[0].font.size = Pt(9)
-        p_cap.runs[0].font.italic = True
+    doc.add_paragraph("The following datasets are officially recommended for comprehensive validation:")
+
+    ds_data = [
+        ("NIH Chest X-Ray 14", "112,120 X-ray images with disease labels. Great for mixing DICOM images with its metadata CSV for realistic bundle tests."),
+        ("RSNA Pneumonia Detection", "Real DICOM format images with bounding boxes. Test real DICOM parsing and large file binding."),
+        ("SIIM-ISIC Melanoma", "DICOM images + structured patient metadata. Ideal for testing Stage 1 normalization across multiple formats."),
+        ("MIMIC-III Clinical Notes", "Massive database of real radiology reports. Perfect for testing the text modality binding in Stage 4."),
+        ("COVID-19 CT Scans", "High-resolution volumetric CT slices. Large payload sizes to stress test AES-GCM throughput.")
+    ]
+
+    ds_table = doc.add_table(rows=len(ds_data) + 1, cols=2)
+    ds_table.rows[0].cells[0].paragraphs[0].text = "Dataset Name"
+    ds_table.rows[0].cells[1].paragraphs[0].text = "Description & Suitability"
+    for idx, (name, desc) in enumerate(ds_data):
+        ds_table.rows[idx + 1].cells[0].paragraphs[0].text = name
+        ds_table.rows[idx + 1].cells[1].paragraphs[0].text = desc
+    format_table(ds_table, [2.5, 4.0], header_bg="475569", alt_bg="f8fafc")
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     # -------------------------------------------------------------
-    # 8. RESEARCH PAPER RECOMMENDATIONS & FUTURE DIRECTIONS
+    # 9. RESEARCH PAPER RECOMMENDATIONS & FUTURE DIRECTIONS
     # -------------------------------------------------------------
-    h1 = doc.add_heading("8. Research Paper Recommendations & Future Work", level=1)
+    h1 = doc.add_heading("9. Research Paper Recommendations & Future Work", level=1)
     h1.paragraph_format.space_before = Pt(14)
     h1.paragraph_format.space_after = Pt(6)
 

@@ -178,6 +178,29 @@ Empirical benchmark results on standard hardware (averaged over multiple iterati
 
 ---
 
+### 🗄️ Recommended Evaluation Datasets
+
+| Dataset | Link | Description | Why Suitable |
+|---|---|---|---|
+| **NIH Chest X-Ray 14** | [Kaggle](https://www.kaggle.com/nih-chest-xrays/data) | 112,120 X-ray images with disease labels. | Great for mixing DICOM images with its metadata CSV for realistic bundle tests. |
+| **RSNA Pneumonia Detection** | [Kaggle](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge) | Real DICOM format images with bounding boxes. | Test real DICOM parsing and large file binding. |
+| **SIIM-ISIC Melanoma** | [Kaggle](https://www.kaggle.com/c/siim-isic-melanoma-classification) | DICOM images + structured patient metadata. | Ideal for testing Stage 1 normalization across multiple formats. |
+| **MIMIC-III Clinical Notes** | [PhysioNet](https://physionet.org/content/mimiciii/1.4/) | Massive database of real radiology reports. | Perfect for testing the text modality binding in Stage 4. |
+| **COVID-19 CT Scans** | [Kaggle](https://www.kaggle.com/andrewmvd/covid19-ct-scans) | High-resolution volumetric CT slices. | Large payload sizes to stress test AES-GCM throughput. |
+
+### 🔬 Reproducing Paper Results with Kaggle Data
+
+To reproduce the benchmark results using Kaggle DICOM files:
+1. Download a DICOM file from the datasets above.
+2. Generate a synthetic text report and a metadata JSON.
+3. Run the CLI tool:
+   ```bash
+   cryptoflow encrypt --image sample.dcm --text report.txt --metadata meta.json --output ./results
+   ```
+4. Run the benchmark tool against the generated bundles to observe sub-second latencies and >120MB/s throughput.
+
+---
+
 ## Project Structure
 
 ```

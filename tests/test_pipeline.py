@@ -27,7 +27,7 @@ def test_full_pipeline_roundtrip(tmp_path: Path) -> None:
 
     # 2. Encrypt
     enc_dir = tmp_path / "encrypted"
-    bundle_path, keyring_path = encrypt_pipeline(file_paths, enc_dir)
+    bundle_path, keyring_path, _ = encrypt_pipeline(file_paths, enc_dir)
 
     assert bundle_path.exists()
     assert keyring_path.exists()
@@ -57,7 +57,7 @@ def test_partial_modalities_roundtrip(tmp_path: Path) -> None:
     orig_text = raw["text"].read_bytes()
 
     enc_dir = tmp_path / "encrypted_partial"
-    bundle_path, keyring_path = encrypt_pipeline(file_paths, enc_dir)
+    bundle_path, keyring_path, _ = encrypt_pipeline(file_paths, enc_dir)
 
     dec_dir = tmp_path / "decrypted_partial"
     restored_files = decrypt_bundle(bundle_path, keyring_path, dec_dir)
