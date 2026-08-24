@@ -197,7 +197,78 @@ To reproduce the benchmark results using Kaggle DICOM files:
    ```bash
    cryptoflow encrypt --image sample.dcm --text report.txt --metadata meta.json --output ./results
    ```
+---
+
+## Formal Adversarial Threat Model (Dolev-Yao Formulation)
+
+In our research model, the network and intermediate storage nodes are governed by the standard **Dolev-Yao adversary** $\mathcal{A}$:
+- **Eavesdropping**: $\mathcal{A}$ can read all transit traffic across PACS routers and hospital VNAs.
+- **Interception & Injection**: $\mathcal{A}$ can delete, reorder, truncate, and inject arbitrary binary packets.
+- **Cross-Patient Splicing**: $\mathcal{A}$ attempts to interchange a benign diagnosis or report $R_{\text{benign}}$ into a malignant patient bundle $B_{\text{malignant}}$ to cause diagnostic misdirection or clinical fraud.
+
+```
+                   +-------------------------------------------------------------+
+                   |                 DOLEV-YAO ADVERSARY MODEL                   |
+                   |                                                             |
+                   |   [Patient A Bundle]                      [Patient B Bundle]|
+                   |   - Scan A (Malignant)                    - Scan B (Benign) |
+                   |   - Report A (Malignant)                  - Report B (Benign)|
+                   |             \                                    /          |
+                   |              \------- SPLICING ATTACK ----------/           |
+                   |                                                             |
+                   |   Adversary attempts to replace Report A with Report B:     |
+                   |   Result in Traditional Systems: ACCEPTED (Per-file check)   |
+                   |   Result in CryptoFlow:          REJECTED (HMAC Invariant)  |
+                   +-------------------------------------------------------------+
+```
+
+### Mathematical Invariant & Security Guarantees:
+Let a patient encounter $E$ consist of $k$ heterogeneous modalities $M_1, M_2, \dots, M_k$.
+For each modality $i$, encryption produces ciphertext $C_i$, authentication tag $T_i$, and nonce $N_i$ using isolated symmetric key $K_i$:
+$$(C_i, T_i) \leftarrow \text{AES-GCM-Enc}_{K_i}(N_i, H_i \parallel P_i)$$
+The cross-modal binding hash $H_{\text{bind}}$ is defined as:
+$$H_{\text{bind}} = \text{HMAC-SHA-256}_{K_{\text{bind}}}\left(\bigoplus_{i=1}^k (C_i \parallel T_i \parallel N_i)\right)$$
+
+**Security Proposition**: Modifying any single byte in any ciphertext $C_j$, altering the modality sequence, injecting a rogue payload, or substituting a file from another patient invalidates $H_{\text{bind}}$ with probability $1 - 2^{-256}$, preventing decryption and unsealing before clinical ingestion.
+
+---
+
+## Asymmetric RSA-OAEP Hybrid Key Encapsulation
+
+To prevent plaintext key exposure on disk, CryptoFlow supports **RSA-OAEP-SHA256 Digital Envelopes**:
+1. Generate an RSA keypair for the receiving institution:
+   ```bash
+   python -m cryptoflow.cli generate-keys --output keys/ --bits 2048
+   ```
+2. Encrypt and encapsulate the `.keyring` with the recipient's public key:
+   ```bash
+   python -m cryptoflow.cli encrypt ./patient_folder --output vault/ --pubkey keys/recipient_public.pem
+   ```
+3. Decrypt the wrapped bundle using the recipient's private key:
+   ```bash
+   python -m cryptoflow.cli decrypt vault/*.cryptoflow --keyring vault/*.keyring --privkey keys/recipient_private.pem --output restored/
+   ```
+
+---
+
+## Empirical Evaluation on Real-World Kaggle Datasets
+
+CryptoFlow provides dedicated automated evaluation harnesses for clinical research datasets:
+
+### 1. NIH Chest X-Ray 14 Dataset (112,120 Radiographs + Demographics CSV)
+```bash
+# Evaluate on 50 real patient encounters from NIH dataset
+python scripts/evaluate_kaggle_nih.py --data-dir path/to/nih_dataset --sample-size 50
+```
+
+### 2. RSNA Pneumonia Detection Challenge (Real DICOM Corpus)
+```bash
+# Evaluate directly on raw DICOM (.dcm) files
+python scripts/evaluate_kaggle_rsna.py --data-dir path/to/rsna_dicoms --sample-size 50
+```
+
 4. Run the benchmark tool against the generated bundles to observe sub-second latencies and >120MB/s throughput.
+
 
 ---
 

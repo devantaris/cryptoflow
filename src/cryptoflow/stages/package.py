@@ -63,13 +63,14 @@ def package_bundle(
     binding_hash: bytes,
     original_filenames: dict[ModalityType, str],
     output_dir: Path,
+    recipient_pubkey_pem: bytes | None = None,
 ) -> tuple[Path, Path, dict]:
     """Package encrypted blobs into a .cryptoflow bundle file.
 
     Produces two output files:
 
     - ``<bundle_id>.cryptoflow`` — the binary bundle
-    - ``<bundle_id>.keyring`` — JSON key file (separate transport)
+    - ``<bundle_id>.keyring`` — JSON key file (optionally RSA-wrapped)
 
     Args:
         encrypted_blobs: Encrypted blobs in modality-sorted order.
@@ -77,9 +78,10 @@ def package_bundle(
         binding_hash: 32-byte HMAC-SHA-256 binding digest.
         original_filenames: Map of modality to original basename.
         output_dir: Directory for output files.
+        recipient_pubkey_pem: Optional RSA public key in PEM format to wrap the keyring.
 
     Returns:
-        Tuple of (bundle_path, keyring_path).
+        Tuple of (bundle_path, keyring_path, stats_dict).
     """
     ensure_dir(output_dir)
 
@@ -147,9 +149,13 @@ def package_bundle(
     )
 
     # Write keyring file (separate transport channel)
-    keyring_json = json.dumps(
-        keyring.to_json(), indent=2
-    ).encode("utf-8")
+    if recipient_pubkey_pem is not None:
+        keyring_dict = keyring.to_wrapped_json(recipient_pubkey_pem)
+        logger.info("[PACKAGE] KeyRing wrapped with recipient RSA public key")
+    else:
+        keyring_dict = keyring.to_json()
+
+    keyring_json = json.dumps(keyring_dict, indent=2).encode("utf-8")
     keyring_path = output_dir / f"{keyring.bundle_id}.keyring"
     write_file(keyring_path, keyring_json)
 

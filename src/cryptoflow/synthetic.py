@@ -267,3 +267,7 @@ def generate_dataset(
         count, total_files, output_dir,
     )
     return bundles
+
+
+# Backwards-compatible alias
+generate_synthetic_bundle = generate_patient_bundle

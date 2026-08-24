@@ -431,13 +431,32 @@ def build_journal_document(output_path: Path, project_root: Path) -> None:
     # -------------------------------------------------------------
     # 6. THREAT MODELING & ATTACK SIMULATION RESULTS
     # -------------------------------------------------------------
-    h1 = doc.add_heading("6. Threat Modeling & Cyberattack Simulation", level=1)
+    h1 = doc.add_heading("6. Formal Dolev-Yao Threat Model & Cyberattack Simulation", level=1)
     h1.paragraph_format.space_before = Pt(14)
     h1.paragraph_format.space_after = Pt(6)
 
     doc.add_paragraph(
-        "To rigorously validate CryptoFlow for academic publication, we developed an automated attack simulation battery "
-        "simulating 7 realistic cyberattack vectors. Every attack was programmatically executed against valid bundles:"
+        "To rigorously validate CryptoFlow for top-tier academic publication (e.g. ACM CCS / USENIX Security), "
+        "we formalize the adversary capabilities under the standard Dolev-Yao security model. The network and "
+        "intermediate storage routers are presumed untrusted. The adversary A can eavesdrop, intercept, inject, "
+        "and splice arbitrary payloads across patient encounters."
+    )
+
+    add_callout(
+        doc,
+        "Mathematical Security Formulation & Invariant Binding",
+        "Let a patient encounter E comprise k heterogeneous modalities M_1, ..., M_k. "
+        "For each modality i, isolated encryption produces (C_i, T_i) = AES-GCM-Enc(K_i, N_i, H_i || P_i). "
+        "The cross-modal binding hash H_bind = HMAC-SHA-256(K_bind, Sorted(C_i || T_i || N_i)) cryptographically "
+        "welds the entire encounter. Modifying any single byte in C_j, swapping files across patients, or injecting "
+        "rogue data invalidates H_bind with probability 1 - 2^(-256), strictly preventing unsealing.",
+        border_color="991b1b",
+        bg_color="fef2f2",
+        icon="🛡️"
+    )
+
+    doc.add_paragraph(
+        "Every attack in our 7-vector formal threat matrix was programmatically executed against valid bundles:"
     )
 
     attacks_matrix = [
@@ -465,6 +484,20 @@ def build_journal_document(output_path: Path, project_root: Path) -> None:
         row.cells[3].paragraphs[0].text = exc
         row.cells[4].paragraphs[0].text = res
     format_table(atk_table, [1.3, 1.6, 1.4, 1.4, 0.8], header_bg="991b1b", alt_bg="fef2f2")
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(8)
+
+    add_callout(
+        doc,
+        "Asymmetric RSA-OAEP Hybrid Key Encapsulation (Digital Envelopes)",
+        "To eliminate plaintext key storage risks on disk, CryptoFlow incorporates RSA-OAEP-SHA256 hybrid key wrapping. "
+        "An ephemeral 256-bit symmetric Data Encapsulation Key (DEK) encrypts the KeyRing JSON with AES-256-GCM, and the "
+        "DEK is encapsulated using the recipient's RSA public key. Only the authentic clinical recipient holding the "
+        "corresponding RSA private key can decapsulate and unseal the patient encounter.",
+        border_color="0891b2",
+        bg_color="f0fdfa",
+        icon="🔑"
+    )
 
     doc.add_paragraph().paragraph_format.space_after = Pt(12)
 

@@ -28,10 +28,16 @@ from typing import Optional, Callable
 def encrypt_pipeline(
     file_paths: dict[ModalityType, Path],
     output_dir: Path,
-    progress_callback: Optional[Callable[[int, str, dict], None]] = None
+    progress_callback: Optional[Callable[[int, str, dict], None]] = None,
+    recipient_pubkey_path: Optional[Path] = None,
+    recipient_pubkey_pem: Optional[bytes] = None,
 ) -> tuple[Path, Path, dict]:
     """Run the full 5-stage encryption pipeline."""
     t_start = time.perf_counter()
+
+    pub_pem = recipient_pubkey_pem
+    if pub_pem is None and recipient_pubkey_path is not None and recipient_pubkey_path.exists():
+        pub_pem = recipient_pubkey_path.read_bytes()
 
     total_input = sum(
         Path(p).stat().st_size for p in file_paths.values()
@@ -81,7 +87,7 @@ def encrypt_pipeline(
     # Stage 5: Package
     t5 = time.perf_counter()
     bundle_path, keyring_path, package_stats = package_bundle(
-        encrypted, keyring, binding_hash, original_filenames, output_dir
+        encrypted, keyring, binding_hash, original_filenames, output_dir, recipient_pubkey_pem=pub_pem
     )
     dt5 = time.perf_counter() - t5
     if progress_callback:

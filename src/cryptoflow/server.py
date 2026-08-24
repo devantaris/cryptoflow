@@ -164,7 +164,7 @@ async def get_bundle_info() -> dict:
                 "size_bytes": stat.st_size,
                 "creation_time": stat.st_ctime
             })
-    return {"success": True, "bundles": bundles}
+    return {"success": True, "total_count": len(bundles), "bundles": bundles}
 
 
 @app.get("/api/v1/stats")
@@ -172,6 +172,19 @@ async def get_stats_endpoint() -> dict:
     """Return platform usage stats."""
     from cryptoflow.utils.stats import get_stats
     return {"success": True, "stats": get_stats()}
+
+
+@app.post("/api/v1/keys/generate-rsa")
+async def generate_rsa_keys(bits: int = 2048) -> dict:
+    """Generate an RSA public/private keypair for hybrid keyring wrapping."""
+    from cryptoflow.utils.crypto import generate_rsa_keypair
+    priv_pem, pub_pem = generate_rsa_keypair(key_size=bits)
+    return {
+        "success": True,
+        "private_key_pem": priv_pem.decode("utf-8"),
+        "public_key_pem": pub_pem.decode("utf-8"),
+        "key_size_bits": bits,
+    }
 
 
 @app.post("/api/v1/generate-synthetic")

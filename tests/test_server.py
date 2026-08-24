@@ -72,6 +72,23 @@ def test_encrypt_and_decrypt_endpoint() -> None:
     assert len(dec_data["files_restored"]) == 3
 
 
+def test_bundle_info_and_stats_endpoints() -> None:
+    # Bundle info
+    resp = client.get("/api/v1/bundle-info")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "bundles" in data
+    assert "total_count" in data
+
+    # Stats endpoint
+    s_resp = client.get("/api/v1/stats")
+    assert s_resp.status_code == 200
+    s_data = s_resp.json()
+    assert "stats" in s_data
+    assert "total_bundles_encrypted" in s_data["stats"]
+    assert "total_attacks_blocked" in s_data["stats"]
+
+
 def test_simulate_attack_endpoint() -> None:
     response = client.post("/api/v1/attack/simulate", json={"attack_type": "bit_flip"})
     assert response.status_code == 200
@@ -86,3 +103,25 @@ def test_metrics_endpoint() -> None:
     data = response.json()
     assert data["success"] is True
     assert len(data["benchmarks"]) > 0
+
+
+def test_download_not_found() -> None:
+    resp = client.get("/api/v1/download/nonexistent_file_999.bin")
+    assert resp.status_code == 404
+    err = resp.json()
+    assert err["error"] is True
+
+
+def test_root_frontend_endpoint() -> None:
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert "html" in resp.headers.get("content-type", "").lower()
+
+
+def test_generate_rsa_keys_endpoint() -> None:
+    resp = client.post("/api/v1/keys/generate-rsa?bits=2048")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert "BEGIN PUBLIC KEY" in data["public_key_pem"]
+    assert "BEGIN PRIVATE KEY" in data["private_key_pem"]

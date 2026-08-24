@@ -190,19 +190,65 @@ class KeyRing:
             "keys": [k.to_json() for k in self.keys],
             "binding_key": self.binding_key.hex(),
             "created_at": self.created_at,
+            "wrapped": False,
+        }
+
+    def to_wrapped_json(self, recipient_pubkey_pem: bytes) -> dict[str, object]:
+        """Serialise and encrypt using RSA-OAEP hybrid digital envelope.
+
+        Args:
+            recipient_pubkey_pem: Recipient's RSA public key PEM bytes.
+
+        Returns:
+            JSON-safe dictionary containing the encrypted envelope.
+        """
+        import json as _json
+        from cryptoflow.utils.crypto import wrap_keyring_payload
+
+        raw_payload = _json.dumps(self.to_json()).encode("utf-8")
+        envelope = wrap_keyring_payload(raw_payload, recipient_pubkey_pem)
+        return {
+            "bundle_id": self.bundle_id,
+            "created_at": self.created_at,
+            "wrapped": True,
+            "envelope": envelope,
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, object]) -> KeyRing:
+    def from_json(
+        cls,
+        data: dict[str, object],
+        private_key_pem: bytes | None = None,
+        passphrase: bytes | None = None,
+    ) -> KeyRing:
         """Deserialise from a JSON-safe dictionary.
 
+        If the keyring is RSA-wrapped, ``private_key_pem`` is required
+        to decrypt the digital envelope.
+
         Args:
-            data: Dictionary previously produced by
-                :meth:`to_json`.
+            data: Dictionary previously produced by :meth:`to_json` or :meth:`to_wrapped_json`.
+            private_key_pem: Optional RSA private key in PEM format.
+            passphrase: Optional passphrase for the private key.
 
         Returns:
             Reconstructed :class:`KeyRing`.
         """
+        import json as _json
+
+        if data.get("wrapped") is True:
+            if private_key_pem is None:
+                raise ValueError(
+                    "This keyring is wrapped with an RSA public key. "
+                    "Recipient private key is required to unlock it."
+                )
+            from cryptoflow.utils.crypto import unwrap_keyring_payload
+
+            envelope = data["envelope"]  # type: ignore[assignment]
+            raw_bytes = unwrap_keyring_payload(envelope, private_key_pem, passphrase)
+            unwrapped_data = _json.loads(raw_bytes.decode("utf-8"))
+            return cls.from_json(unwrapped_data)
+
         keys_data: list[dict[str, str]] = data["keys"]  # type: ignore[assignment]
         return cls(
             bundle_id=str(data["bundle_id"]),

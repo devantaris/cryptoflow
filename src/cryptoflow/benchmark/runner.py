@@ -213,3 +213,12 @@ class BenchmarkRunner:
         data = [asdict(r) for r in results]
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+
+
+def run_benchmarks(
+    sizes: list[tuple[str, int]] | None = None,
+    iterations: int = 3,
+) -> list[AggregatedBenchmark]:
+    """Convenience function to run performance benchmarks."""
+    runner = BenchmarkRunner(iterations=iterations)
+    return runner.run_all(sizes=sizes)

@@ -91,3 +91,39 @@ def test_hmac_binding_hash() -> None:
         original_size=b1.original_size,
     )
     assert verify_binding_hash(binding_key, [b1_tampered, b2], h1) is False
+
+
+def test_rsa_keypair_generation_and_wrapping() -> None:
+    from cryptoflow.exceptions import KeyMismatchError
+    from cryptoflow.utils.crypto import (
+        generate_rsa_keypair,
+        unwrap_keyring_payload,
+        wrap_keyring_payload,
+    )
+
+    priv_pem, pub_pem = generate_rsa_keypair(key_size=2048)
+    assert b"BEGIN PRIVATE KEY" in priv_pem
+    assert b"BEGIN PUBLIC KEY" in pub_pem
+
+    secret_keyring_json = b'{"bundle_id": "123", "binding_key": "aabbcc"}'
+
+    # Wrap with recipient public key
+    envelope = wrap_keyring_payload(secret_keyring_json, pub_pem)
+    assert envelope["algorithm"] == "RSA-OAEP-SHA256+AES-256-GCM"
+    assert "encrypted_dek" in envelope
+    assert "ciphertext" in envelope
+
+    # Unwrap with recipient private key
+    recovered = unwrap_keyring_payload(envelope, priv_pem)
+    assert recovered == secret_keyring_json
+
+    # Attempt unwrap with wrong/mismatched private key
+    wrong_priv_pem, _ = generate_rsa_keypair(key_size=2048)
+    with pytest.raises(KeyMismatchError):
+        unwrap_keyring_payload(envelope, wrong_priv_pem)
+
+    # Corrupt envelope ciphertext
+    tampered_envelope = dict(envelope)
+    tampered_envelope["ciphertext"] = envelope["ciphertext"][:-2] + "ff"
+    with pytest.raises(AuthTagMismatchError):
+        unwrap_keyring_payload(tampered_envelope, priv_pem)

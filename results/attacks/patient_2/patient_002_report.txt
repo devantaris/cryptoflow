@@ -1,9 +1,9 @@
 RADIOLOGY REPORT
 ========================================
-Patient: Omar Kim
-DOB: 1960-10-28
-Study: Chest X-ray PA and Lateral
-Date: 2026-08-16
+Patient: Yuki Johnson
+DOB: 1988-09-08
+Study: CT Abdomen and Pelvis
+Date: 2026-08-24
 
 CLINICAL HISTORY:
 Evaluation for suspected pulmonary pathology.
@@ -12,13 +12,13 @@ TECHNIQUE:
 Helical CT of the chest was performed with intravenous contrast.
 
 FINDINGS:
-Small pleural effusion on the left side.
+Calcified granuloma in right upper lobe, likely benign.
 
 IMPRESSION:
-Normal cardiac silhouette. Clear lungs bilaterally.
+Small pleural effusion on the left side.
 
 RECOMMENDATION:
-No further imaging needed at this time.
+Surgical consultation recommended.
 
-Signed: Dr. Mueller, MD
-Report ID: RPT-84761
+Signed: Dr. Patel, MD
+Report ID: RPT-33438

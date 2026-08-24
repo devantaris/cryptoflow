@@ -1,9 +1,9 @@
 RADIOLOGY REPORT
 ========================================
-Patient: Omar Williams
-DOB: 1956-04-05
-Study: CT Head without contrast
-Date: 2026-08-07
+Patient: Chen Hassan
+DOB: 1963-03-09
+Study: PET-CT Whole Body
+Date: 2026-08-10
 
 CLINICAL HISTORY:
 Evaluation for suspected pulmonary pathology.
@@ -12,13 +12,13 @@ TECHNIQUE:
 Helical CT of the chest was performed with intravenous contrast.
 
 FINDINGS:
-Calcified granuloma in right upper lobe, likely benign.
+Normal cardiac silhouette. Clear lungs bilaterally.
 
 IMPRESSION:
-Bilateral ground-glass opacities consistent with pneumonia.
+Enlarged mediastinal lymph nodes requiring follow-up.
 
 RECOMMENDATION:
-No further imaging needed at this time.
+Correlate with clinical findings. Consider MRI.
 
-Signed: Dr. Williams, MD
-Report ID: RPT-32747
+Signed: Dr. Kim, MD
+Report ID: RPT-65718

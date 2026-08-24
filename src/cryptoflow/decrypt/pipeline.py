@@ -78,28 +78,33 @@ def _parse_bundle_header(data: bytes) -> tuple[int, str, int, int]:
 def _extract_filename_from_header(header: bytes) -> str:
     """Extract the original filename from a 64-byte blob header.
 
-    The filename occupies bytes [11:64], encoded as UTF-8 with
-    null padding.
+    The filename occupies bytes [11:64], encoded as UTF-8 with null padding.
+    Strictly sanitizes against path traversal attacks (e.g. ``../../etc/passwd``).
     """
     fname_raw = header[11:64]
     # Strip null padding
     null_idx = fname_raw.find(b"\x00")
     if null_idx >= 0:
         fname_raw = fname_raw[:null_idx]
-    return fname_raw.decode("utf-8", errors="replace")
+    decoded = fname_raw.decode("utf-8", errors="replace")
+    # Sanitize to pure basename to prevent directory traversal
+    clean_name = Path(decoded).name
+    return clean_name or "restored_payload.bin"
 
 
 def decrypt_bundle(
     bundle_path: Path,
     keyring_path: Path,
     output_dir: Path,
+    private_key_path: Path | None = None,
+    passphrase: bytes | None = None,
 ) -> list[Path]:
     """Decrypt a .cryptoflow bundle and restore original files.
 
     Verification steps performed:
 
     1. Validate bundle header magic and version
-    2. Verify keyring bundle_id matches the bundle
+    2. Verify keyring bundle_id matches the bundle (unwrapping RSA digital envelope if present)
     3. Recompute and verify the HMAC-SHA-256 binding hash
     4. Decrypt each blob (GCM auto-verifies auth tags)
     5. Strip typed headers and write original files
@@ -108,19 +113,18 @@ def decrypt_bundle(
         bundle_path: Path to the ``.cryptoflow`` bundle file.
         keyring_path: Path to the ``.keyring`` JSON file.
         output_dir: Directory to write decrypted files.
+        private_key_path: Optional path to recipient RSA private key PEM file
+            if the keyring was encrypted with RSA-OAEP.
+        passphrase: Optional passphrase for the private key.
 
     Returns:
         List of paths to the restored original files.
 
     Raises:
-        InvalidBundleError: If the bundle is corrupted or
-            malformed.
-        KeyMismatchError: If the keyring doesn't match the
-            bundle.
-        BindingMismatchError: If the binding hash verification
-            fails (files may have been swapped or tampered).
-        AuthTagMismatchError: If any individual file's GCM
-            auth tag fails (single-file tamper detected).
+        InvalidBundleError: If the bundle is corrupted or malformed.
+        KeyMismatchError: If the keyring doesn't match the bundle or RSA key is invalid.
+        BindingMismatchError: If the binding hash verification fails.
+        AuthTagMismatchError: If any individual file's GCM auth tag fails.
     """
     t_start = time.perf_counter()
     ensure_dir(output_dir)
@@ -131,7 +135,16 @@ def decrypt_bundle(
 
     logger.info("[DECRYPT] Reading keyring: %s", keyring_path.name)
     keyring_data = read_file(keyring_path)
-    keyring = KeyRing.from_json(json.loads(keyring_data.decode("utf-8")))
+    
+    priv_pem: bytes | None = None
+    if private_key_path is not None and private_key_path.exists():
+        priv_pem = read_file(private_key_path)
+
+    keyring = KeyRing.from_json(
+        json.loads(keyring_data.decode("utf-8")),
+        private_key_pem=priv_pem,
+        passphrase=passphrase,
+    )
 
     # --- Parse bundle header ---
     version, bundle_id, manifest_len, modality_count = (
