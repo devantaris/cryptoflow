@@ -1,4 +1,4 @@
-export type ViewType = 'encrypt' | 'pipeline' | 'decrypt' | 'sandbox' | 'metrics';
+export type ViewType = 'landing' | 'encrypt' | 'pipeline' | 'decrypt' | 'sandbox' | 'metrics';
 
 export interface ModalityFile {
   type: 'image' | 'text' | 'metadata';

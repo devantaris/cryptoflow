@@ -16,6 +16,11 @@ dependencies = [
     "seaborn>=0.13",
     "Pillow>=10.0",
     "pydicom>=2.4",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.0.0",
+    "numpy>=1.26.0",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +34,9 @@ cryptoflow = "cryptoflow.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.vercel]
+entrypoint = "src/cryptoflow/server.py:app"
 
 [tool.pytest.ini_options]
 minversion = "8.0"

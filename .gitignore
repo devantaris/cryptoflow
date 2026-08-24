@@ -43,6 +43,10 @@ encrypted/
 
 # Web storage (runtime vault — not source code)
 web_storage/
+results/*/vault/
+results/*/work/
+results/*/restored/
+results/*/attack_sim/
 
 # Frontend build output
 frontend/dist/

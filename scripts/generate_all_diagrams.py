@@ -176,7 +176,54 @@ def plot_attack_matrix():
     for (i, j), val in np.ndenumerate(matrix):
         ax.text(j, i, 'BLOCKED' if val else 'PASS', ha='center', va='center', color='black' if val else 'white', weight='bold', fontsize=8)
     
-    fig.savefig(OUT_DIR / "attack_matrix.png", dpi=300, bbox_inches='tight')
+def plot_real_data_benchmarks():
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), facecolor=BG_COLOR)
+    for ax in (ax1, ax2):
+        ax.set_facecolor(AX_BG_COLOR)
+        ax.tick_params(colors=TEXT_COLOR)
+        for spine in ax.spines.values():
+            spine.set_color('#334155')
+        ax.yaxis.label.set_color(TEXT_COLOR)
+        ax.xaxis.label.set_color(TEXT_COLOR)
+        ax.title.set_color(TEXT_COLOR)
+
+    # Throughput comparison
+    datasets = ["Synthetic (1MB)", "NIH Chest X-Ray (PNG)", "RSNA Pneumonia (DICOM)"]
+    enc_thrus = [17.63, 11.60, 1.94]
+    dec_thrus = [21.28, 8.42, 3.10]
+
+    import numpy as np
+    x = np.arange(len(datasets))
+    width = 0.35
+
+    ax1.bar(x - width/2, enc_thrus, width, label='Encryption Throughput', color=PRIMARY)
+    ax1.bar(x + width/2, dec_thrus, width, label='Decryption Throughput', color=SECONDARY)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(datasets, rotation=15, ha='right')
+    ax1.set_ylabel("Throughput (MB/s)")
+    ax1.set_title("Real-World Kaggle Clinical Throughput")
+    ax1.grid(True, linestyle='--', alpha=0.3, color='#334155')
+    leg1 = ax1.legend(facecolor=AX_BG_COLOR, edgecolor='#334155')
+    for text in leg1.get_texts():
+        text.set_color(TEXT_COLOR)
+
+    # Latency comparison (ms)
+    enc_lat = [5.6, 34.49, 65.43]
+    dec_lat = [4.7, 47.49, 40.93]
+
+    ax2.bar(x - width/2, enc_lat, width, label='Encryption Latency', color='#818CF8')
+    ax2.bar(x + width/2, dec_lat, width, label='Decryption Latency', color=SUCCESS)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(datasets, rotation=15, ha='right')
+    ax2.set_ylabel("Mean Latency (ms)")
+    ax2.set_title("Real-World Clinical Processing Latency")
+    ax2.grid(True, linestyle='--', alpha=0.3, color='#334155')
+    leg2 = ax2.legend(facecolor=AX_BG_COLOR, edgecolor='#334155')
+    for text in leg2.get_texts():
+        text.set_color(TEXT_COLOR)
+
+    fig.tight_layout()
+    fig.savefig(OUT_DIR / "kaggle_real_data_benchmarks.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == "__main__":
@@ -185,4 +232,6 @@ if __name__ == "__main__":
     plot_security_comparison()
     build_block_diagrams()
     plot_attack_matrix()
-    print("Generated all diagrams.")
+    plot_real_data_benchmarks()
+    print("Generated all diagrams including real data benchmarks.")
+

@@ -36,86 +36,82 @@ export const DecryptionInspector: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto py-8">
       {/* Header */}
-      <div className="mb-8 pb-6 border-b border-stone-300">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="badge-oxford px-2 py-0.5 rounded text-[11px] font-mono font-medium">
-            SECTION III • VERIFICATION
-          </span>
-          <span className="text-stone-400 text-xs">•</span>
-          <span className="text-stone-500 font-serif italic text-xs">
-            Constant-Time Authenticated Unsealing
+      <div className="mb-8 pb-6 border-b border-zinc-800">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="badge-cyan px-2.5 py-0.5 rounded text-[11px] font-mono font-medium">
+            MODULE III • VERIFICATION & RESTORATION
           </span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
           Decryption & Cross-Modal Integrity Inspection
         </h1>
-        <p className="text-sm font-serif text-stone-600 mt-1 max-w-2xl leading-relaxed">
+        <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed font-sans">
           Provide the sealed .cryptoflow binary container and separate .keyring file to mathematically verify the HMAC cross-modal invariant and AEAD tags prior to clinical payload extraction.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-900 text-xs font-mono flex items-center gap-3">
-          <ShieldAlert className="w-4 h-4 text-red-700 flex-shrink-0" />
+        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-mono flex items-center gap-3">
+          <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
           <div>
-            <div className="font-bold text-red-900">DECRYPTION ABORTED — INTEGRITY BREACH IDENTIFIED</div>
-            <div className="mt-0.5 text-red-700">{error}</div>
+            <div className="font-semibold">Verification Alert:</div>
+            <div className="mt-0.5">{error}</div>
           </div>
         </div>
       )}
 
-      {/* Dual Upload Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Dropzone 1: .cryptoflow Bundle */}
-        <div className="journal-card rounded-lg p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-2 mb-3 border-b border-stone-200">
+      {/* 2 Dropzone Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+        {/* Dropzone 1: .cryptoflow */}
+        <div className="surface-card rounded-xl p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-stone-900 text-stone-100 font-serif font-bold text-xs flex items-center justify-center">
+              <span className="w-6 h-6 rounded-md bg-zinc-800 text-zinc-300 flex items-center justify-center border border-zinc-700 text-xs font-mono font-bold">
                 1
               </span>
-              <h3 className="font-serif font-bold text-sm text-stone-900">
-                1. Sealed Bundle (.cryptoflow)
+              <h3 className="font-medium text-xs text-zinc-200 uppercase tracking-wider font-mono">
+                Encrypted Payload (.cryptoflow)
               </h3>
             </div>
-            <span className="badge-editorial text-[10px] px-2 py-0.5 rounded">
-              Ciphertext Binary
+            <span className="badge-neutral text-[10px] font-mono px-2 py-0.5 rounded">
+              Binary Blob
             </span>
           </div>
 
-          <div className="border border-dashed border-stone-300 hover:border-stone-500 rounded p-6 text-center transition cursor-pointer bg-[#FAF9F6]">
+          <div className="border border-dashed border-zinc-700 hover:border-zinc-500 rounded-lg p-5 text-center transition cursor-pointer bg-zinc-950/40">
             <input
               type="file"
-              accept=".cryptoflow"
+              accept=".cryptoflow,.bin,.cf"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   setBundleFile(e.target.files[0]);
                 }
               }}
-              className="w-full text-xs font-mono text-stone-600 file:mr-2.5 file:py-1 file:px-2.5 file:rounded file:border file:border-stone-300 file:text-[11px] file:font-medium file:bg-stone-100 file:text-stone-800 hover:file:bg-stone-200 cursor-pointer"
+              className="w-full text-xs font-mono text-zinc-400 file:mr-2.5 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-medium file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
             />
-            <p className="text-[11px] font-mono text-stone-500 mt-2">
-              {bundleFile ? `${bundleFile.name} (${(bundleFile.size / 1024).toFixed(1)} KB)` : 'Drop .cryptoflow bundle file here'}
+            <p className="text-[11px] font-mono text-zinc-500 mt-2">
+              {bundleFile ? `${bundleFile.name} (${(bundleFile.size / 1024).toFixed(1)} KB)` : 'Select or drop .cryptoflow file'}
             </p>
           </div>
         </div>
 
         {/* Dropzone 2: .keyring */}
-        <div className="journal-card rounded-lg p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-2 mb-3 border-b border-stone-200">
+        <div className="surface-card rounded-xl p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-stone-900 text-stone-100 font-serif font-bold text-xs flex items-center justify-center">
+              <span className="w-6 h-6 rounded-md bg-zinc-800 text-zinc-300 flex items-center justify-center border border-zinc-700 text-xs font-mono font-bold">
                 2
               </span>
-              <h3 className="font-serif font-bold text-sm text-stone-900">
-                2. Out-of-Band Keyring (.keyring)
+              <h3 className="font-medium text-xs text-zinc-200 uppercase tracking-wider font-mono">
+                Out-of-Band Keyring (.keyring)
               </h3>
             </div>
-            <span className="badge-editorial text-[10px] px-2 py-0.5 rounded">
-              JSON Key Material
+            <span className="badge-neutral text-[10px] font-mono px-2 py-0.5 rounded">
+              JSON Secret
             </span>
           </div>
 
-          <div className="border border-dashed border-stone-300 hover:border-stone-500 rounded p-6 text-center transition cursor-pointer bg-[#FAF9F6]">
+          <div className="border border-dashed border-zinc-700 hover:border-zinc-500 rounded-lg p-5 text-center transition cursor-pointer bg-zinc-950/40">
             <input
               type="file"
               accept=".keyring,.json"
@@ -124,67 +120,67 @@ export const DecryptionInspector: React.FC = () => {
                   setKeyringFile(e.target.files[0]);
                 }
               }}
-              className="w-full text-xs font-mono text-stone-600 file:mr-2.5 file:py-1 file:px-2.5 file:rounded file:border file:border-stone-300 file:text-[11px] file:font-medium file:bg-stone-100 file:text-stone-800 hover:file:bg-stone-200 cursor-pointer"
+              className="w-full text-xs font-mono text-zinc-400 file:mr-2.5 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-medium file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
             />
-            <p className="text-[11px] font-mono text-stone-500 mt-2">
-              {keyringFile ? `${keyringFile.name} (${(keyringFile.size / 1024).toFixed(1)} KB)` : 'Drop .keyring JSON file here'}
+            <p className="text-[11px] font-mono text-zinc-500 mt-2">
+              {keyringFile ? `${keyringFile.name} (${(keyringFile.size / 1024).toFixed(1)} KB)` : 'Select or drop .keyring file'}
             </p>
           </div>
         </div>
       </div>
 
       {/* Decrypt Action */}
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-6">
         <button
           onClick={handleDecrypt}
           disabled={loading || !bundleFile || !keyringFile}
-          className="btn-journal-primary px-8 py-2.5 text-xs flex items-center gap-2 cursor-pointer disabled:opacity-40"
+          className="btn-primary px-8 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer disabled:opacity-40 shadow-lg shadow-white/10"
         >
           <Unlock className="w-3.5 h-3.5" />
-          <span>{loading ? 'Verifying Integrity Digest...' : 'Verify Wax Seal & Extract Multimodal Encounter'}</span>
+          <span>{loading ? 'Verifying Integrity...' : 'Verify Cryptographic Seal & Decrypt'}</span>
         </button>
       </div>
 
       {/* Verification Results Panel */}
       {decryptResult && decryptResult.verified && (
-        <div className="journal-card rounded-lg p-6 mb-8 border-emerald-300 bg-emerald-50/20">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-5 border-b border-stone-300">
+        <div className="surface-card rounded-2xl p-5 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-5 border-b border-zinc-800/80">
             <div className="flex items-center gap-4">
-              <WaxSeal status="intact" label="SEAL AUTHENTIC" />
+              <WaxSeal status="intact" size={60} label="AUTHENTIC" />
               <div>
-                <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-800" />
-                  <span>Cross-Modal Invariant Validated (100% Authentic)</span>
+                <h3 className="font-semibold text-sm text-zinc-100 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Cross-Modal Invariant Validated</span>
                 </h3>
-                <p className="text-xs font-serif text-stone-600 mt-0.5">
-                  Constant-time HMAC-SHA-256 cross-modal binding hash and all 3 GCM authentication tags verified successfully.
+                <p className="text-xs text-zinc-400 mt-0.5 font-sans">
+                  Deterministic HMAC binding hash and all 3 GCM tags matched with zero plaintext compromise.
                 </p>
               </div>
             </div>
 
-            <div className="text-right font-mono text-xs text-stone-600">
-              <div>Decryption Latency: <span className="text-stone-900 font-bold">{(decryptResult.duration_seconds * 1000).toFixed(1)} ms</span></div>
-              <div>Integrity Status: <span className="text-emerald-800 font-bold">BYTE-PERFECT RESTORATION</span></div>
+            <div className="text-right font-mono text-xs text-zinc-400">
+              <div>Decryption Latency: <span className="text-zinc-100 font-semibold">{(decryptResult.duration_seconds * 1000).toFixed(1)} ms</span></div>
+              <div>Status: <span className="text-emerald-400 font-semibold">LOSSLESS RESTORATION</span></div>
             </div>
           </div>
 
-          {/* Restored Modalities Tabs */}
+          {/* Restored Modality Artifacts */}
           <div className="mt-5">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-serif font-bold text-sm text-stone-900">
-                Restored Modality Artifacts:
+              <h4 className="font-mono text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                Restored Modalities:
               </h4>
               <div className="flex gap-1.5">
                 {decryptResult.files_restored.map((f) => (
                   <button
                     key={f.filename}
                     onClick={() => setActiveTab(f.filename.includes('report') ? 'report' : f.filename.includes('meta') ? 'meta' : 'image')}
-                    className={`px-3 py-1 rounded text-xs font-mono transition cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-xs font-mono transition cursor-pointer ${
                       (f.filename.includes('report') && activeTab === 'report') ||
                       (f.filename.includes('meta') && activeTab === 'meta') ||
                       (f.filename.includes('.dcm') && activeTab === 'image')
-                        ? 'bg-stone-900 text-stone-100 font-medium'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                        ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     {f.filename}
@@ -194,19 +190,19 @@ export const DecryptionInspector: React.FC = () => {
             </div>
 
             {/* Content Previews */}
-            <div className="bg-white rounded-md p-4 border border-stone-300 font-mono text-xs text-stone-800 shadow-xs">
+            <div className="bg-zinc-950/80 rounded-xl p-4 border border-zinc-800 font-mono text-xs text-zinc-200">
               {decryptResult.files_restored.map((f) => {
                 if (activeTab === 'report' && f.filename.includes('report')) {
                   return (
                     <div key={f.filename} className="space-y-2">
-                      <div className="flex justify-between items-center pb-2 border-b border-stone-200 text-stone-500">
+                      <div className="flex justify-between items-center pb-2 border-b border-zinc-850 text-zinc-400">
                         <span>{f.filename} ({f.size_formatted})</span>
-                        <a href={f.download_url} download={f.filename} className="text-blue-700 hover:underline flex items-center gap-1 font-sans">
-                          <Download className="w-3.5 h-3.5" /> Download Plaintext
+                        <a href={f.download_url} download={f.filename} className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                          <Download className="w-3.5 h-3.5" /> Download
                         </a>
                       </div>
-                      <pre className="whitespace-pre-wrap font-mono text-xs text-stone-800 leading-relaxed">
-                        {f.content_preview || 'Plaintext recovered successfully.'}
+                      <pre className="whitespace-pre-wrap font-mono text-xs text-zinc-300 leading-relaxed">
+                        {f.content_preview || 'Plaintext recovered.'}
                       </pre>
                     </div>
                   );
@@ -214,13 +210,13 @@ export const DecryptionInspector: React.FC = () => {
                 if (activeTab === 'meta' && f.filename.includes('meta')) {
                   return (
                     <div key={f.filename} className="space-y-2">
-                      <div className="flex justify-between items-center pb-2 border-b border-stone-200 text-stone-500">
+                      <div className="flex justify-between items-center pb-2 border-b border-zinc-850 text-zinc-400">
                         <span>{f.filename} ({f.size_formatted})</span>
-                        <a href={f.download_url} download={f.filename} className="text-blue-700 hover:underline flex items-center gap-1 font-sans">
-                          <Download className="w-3.5 h-3.5" /> Download JSON
+                        <a href={f.download_url} download={f.filename} className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                          <Download className="w-3.5 h-3.5" /> Download
                         </a>
                       </div>
-                      <pre className="whitespace-pre-wrap font-mono text-xs text-stone-800 leading-relaxed">
+                      <pre className="whitespace-pre-wrap font-mono text-xs text-zinc-300 leading-relaxed">
                         {f.content_preview || 'JSON metadata recovered.'}
                       </pre>
                     </div>
@@ -229,11 +225,11 @@ export const DecryptionInspector: React.FC = () => {
                 if (activeTab === 'image' && f.filename.includes('.dcm')) {
                   return (
                     <div key={f.filename} className="flex flex-col items-center py-4 text-center">
-                      <ImageIcon className="w-10 h-10 text-stone-500 mb-2" />
-                      <span className="text-stone-900 font-serif font-bold">{f.filename}</span>
-                      <span className="text-stone-500 text-[11px] mt-0.5">{f.size_formatted} — Byte-for-byte authentic DICOM payload</span>
-                      <a href={f.download_url} download={f.filename} className="mt-3 btn-journal-secondary px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
-                        <Download className="w-3.5 h-3.5" /> Download Restored DICOM File
+                      <ImageIcon className="w-8 h-8 text-zinc-400 mb-2" />
+                      <span className="text-zinc-200 font-semibold">{f.filename}</span>
+                      <span className="text-zinc-500 text-[11px] mt-0.5">{f.size_formatted} — Byte-exact DICOM scan</span>
+                      <a href={f.download_url} download={f.filename} className="mt-3 btn-secondary px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
+                        <Download className="w-3.5 h-3.5" /> Download Restored File
                       </a>
                     </div>
                   );
