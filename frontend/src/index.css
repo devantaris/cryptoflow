@@ -1,34 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Newsreader', 'Source Serif 4', 'Times New Roman', Times, Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  --color-zinc-950: #09090b;
-  --color-zinc-900: #121215;
-  --color-zinc-850: #18181b;
-  --color-zinc-800: #27272a;
-  --color-zinc-700: #3f3f46;
-  --color-zinc-600: #52525b;
-  --color-zinc-500: #71717a;
-  --color-zinc-400: #a1a1aa;
-  --color-zinc-300: #d4d4d8;
-  --color-zinc-200: #e4e4e7;
-  --color-zinc-100: #f4f4f5;
+  --color-paper-50: #FAF9F6;
+  --color-paper-100: #F5F4F0;
+  --color-paper-200: #E7E5E4;
+  --color-paper-300: #D6D3D1;
+  --color-paper-400: #A8A29E;
+  --color-paper-500: #78716C;
+  --color-paper-700: #44403C;
+  --color-paper-900: #1C1917;
 
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
+  --color-ink-950: #0C0A09;
+  --color-ink-900: #1C1917;
+  --color-ink-800: #292524;
+  --color-ink-700: #44403C;
+  --color-ink-600: #57534E;
 }
 
 @layer base {
   body {
-    background-color: #09090b;
-    color: #f4f4f5;
-    font-family: var(--font-sans);
-    letter-spacing: -0.01em;
+    background-color: #FAF9F6;
+    color: #1C1917;
+    font-family: var(--font-serif);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    color: #1C1917;
+    letter-spacing: -0.02em;
   }
 
   ::-webkit-scrollbar {
@@ -36,115 +41,108 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #09090b;
+    background: #FAF9F6;
   }
   ::-webkit-scrollbar-thumb {
-    background: #27272a;
+    background: #D6D3D1;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+    background: #A8A29E;
   }
 }
 
-/* Linear / Vercel Grade Glass Surface */
-.surface-card {
-  background: rgba(18, 18, 21, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+/* Academic Journal Card Styling */
+.journal-card {
+  background: #FFFFFF;
+  border: 1px solid #E7E5E4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.surface-card-hover {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.journal-card-hover {
+  transition: all 0.2s ease;
 }
-.surface-card-hover:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(24, 24, 27, 0.85);
-  box-shadow: 0 8px 32px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-}
-
-.surface-elevated {
-  background: rgba(24, 24, 27, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+.journal-card-hover:hover {
+  border-color: #D6D3D1;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 
-/* Subtle Ambient Glow */
-.ambient-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+/* Double rule paper dividers (New York Times / Academic style) */
+.double-rule {
+  border-top: 2px solid #1C1917;
+  border-bottom: 1px solid #1C1917;
+  height: 4px;
 }
 
-.subtle-grid {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+.single-rule {
+  border-top: 1px solid #E7E5E4;
 }
 
-/* Primary Button (Apple / Vercel style) */
-.btn-primary {
-  background: #ffffff;
-  color: #09090b;
+/* Editorial Button Styling */
+.btn-journal-primary {
+  background: #1C1917;
+  color: #FAF9F6;
+  font-family: var(--font-sans);
   font-weight: 500;
-  border-radius: 0.625rem;
+  border-radius: 0.5rem;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-.btn-primary:hover {
-  background: #e4e4e7;
+.btn-journal-primary:hover {
+  background: #292524;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
-.btn-primary:active {
+.btn-journal-primary:active {
   transform: translateY(0);
 }
 
-/* Secondary Button */
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f4f4f5;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.625rem;
+.btn-journal-secondary {
+  background: #FFFFFF;
+  color: #1C1917;
+  border: 1px solid #E7E5E4;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border-radius: 0.5rem;
   transition: all 0.15s ease;
 }
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+.btn-journal-secondary:hover {
+  background: #F5F4F0;
+  border-color: #D6D3D1;
 }
 
-/* Accent Badge */
-.badge-neutral {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #a1a1aa;
+/* Badges */
+.badge-editorial {
+  background: #F5F4F0;
+  border: 1px solid #E7E5E4;
+  color: #44403C;
+  font-family: var(--font-mono);
 }
 
-.badge-success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: #34d399;
+.badge-oxford {
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
+  color: #1E40AF;
+  font-family: var(--font-mono);
 }
 
-.badge-warning {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+.badge-crimson {
+  background: #FEF2F2;
+  border: 1px solid #FEE2E2;
+  color: #991B1B;
+  font-family: var(--font-mono);
 }
 
-.badge-danger {
-  background: rgba(244, 63, 94, 0.1);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  color: #fb7185;
+.badge-emerald {
+  background: #ECFDF5;
+  border: 1px solid #D1FAE5;
+  color: #065F46;
+  font-family: var(--font-mono);
 }
 
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
-}
-
-.animate-pulse-subtle {
-  animation: pulseSubtle 3s ease-in-out infinite;
+.badge-amber {
+  background: #FFFBEB;
+  border: 1px solid #FEF3C7;
+  color: #92400E;
+  font-family: var(--font-mono);
 }
