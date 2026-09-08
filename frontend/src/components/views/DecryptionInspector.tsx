@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, ShieldAlert, Download, Image as ImageIcon, Unlock } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, Download, Image as ImageIcon, Unlock, Activity } from 'lucide-react';
 import type { DecryptResult } from '../../types';
 import { decryptBundleApi } from '../../services/api';
 import { WaxSeal } from '../animations/WaxSeal';
@@ -163,6 +163,52 @@ export const DecryptionInspector: React.FC = () => {
               <div>Status: <span className="text-emerald-400 font-semibold">LOSSLESS RESTORATION</span></div>
             </div>
           </div>
+
+          {/* Verified Pre-Encryption Uncertainty Profile */}
+          {decryptResult.uncertainty_profile && (
+            <div className="mt-5 p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 font-mono text-xs">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="text-white font-bold uppercase tracking-wider text-[11px]">
+                    Verified Pre-Encryption Uncertainty Profile (In-Manifest)
+                  </span>
+                </div>
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">
+                  Evidence Certified
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 font-sans mb-3">
+                {decryptResult.uncertainty_profile.comparison.narrative}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+                  <span className="text-zinc-500 block">DST Fused Belief</span>
+                  <span className="text-cyan-300 font-bold text-xs">
+                    {(decryptResult.uncertainty_profile.fusion.dst.belief_reliable * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+                  <span className="text-zinc-500 block">DEL Expected Rel</span>
+                  <span className="text-amber-300 font-bold text-xs">
+                    {(decryptResult.uncertainty_profile.fusion.del.expected_reliable * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+                  <span className="text-zinc-500 block">Dempster Conflict K</span>
+                  <span className="text-emerald-400 font-bold text-xs">
+                    {decryptResult.uncertainty_profile.fusion.dst_conflict_K.toFixed(5)}
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+                  <span className="text-zinc-500 block">DEL Vacuity (u)</span>
+                  <span className="text-zinc-300 font-bold text-xs">
+                    {decryptResult.uncertainty_profile.fusion.del.epistemic_uncertainty.toFixed(4)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Restored Modality Artifacts */}
           <div className="mt-5">

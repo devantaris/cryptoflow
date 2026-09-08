@@ -339,6 +339,7 @@ async def encrypt_endpoint(
                 for k in keyring_json["keys"]
             ],
             "binding_hash": manifest_json["binding_hash"],
+            "uncertainty": metadata_dict.get("uncertainty") or manifest_json.get("uncertainty_profile"),
         }
 
     except Exception as e:
@@ -369,6 +370,12 @@ async def decrypt_endpoint(
         out_dir = RESTORED_DIR / f"restored_{op_id[:8]}"
         ensure_dir(out_dir)
 
+        # Parse manifest from bundle to extract uncertainty profile if present
+        bundle_bytes = read_file(bundle_path)
+        manifest_len = int.from_bytes(bundle_bytes[24:28], "little")
+        manifest_json = json.loads(bundle_bytes[64 : 64 + manifest_len].decode("utf-8"))
+        uncertainty_profile = manifest_json.get("uncertainty_profile")
+
         t0 = time.perf_counter()
         restored_files = decrypt_bundle(bundle_path, keyring_path, out_dir)
         duration = time.perf_counter() - t0
@@ -392,6 +399,7 @@ async def decrypt_endpoint(
             "integrity_status": "PASSED_AUTHENTIC",
             "duration_seconds": duration,
             "files_restored": file_list,
+            "uncertainty_profile": uncertainty_profile,
         }
 
     except (BindingMismatchError, AuthTagMismatchError, KeyMismatchError, InvalidBundleError) as e:

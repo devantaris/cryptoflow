@@ -16,6 +16,63 @@ export interface EncryptPayload {
   anonymize?: boolean;
 }
 
+export interface DSTMetrics {
+  mass_reliable: number;
+  mass_unreliable: number;
+  mass_uncertain: number;
+  belief_reliable: number;
+  plausibility_reliable: number;
+  uncertainty_interval: number;
+}
+
+export interface DELMetrics {
+  alpha_reliable: number;
+  alpha_unreliable: number;
+  expected_reliable: number;
+  expected_unreliable: number;
+  epistemic_uncertainty: number;
+  dirichlet_strength: number;
+}
+
+export interface FeatureVectorData {
+  entropy_bits: number;
+  entropy_score: number;
+  size_score: number;
+  format_score: number;
+}
+
+export interface ModalityAssessmentData {
+  modality: string;
+  present: boolean;
+  dst: DSTMetrics;
+  del: DELMetrics;
+  features?: FeatureVectorData;
+}
+
+export interface FusionResultData {
+  dst: DSTMetrics;
+  del: DELMetrics;
+  dst_conflict_K: number;
+}
+
+export interface TheoryComparisonData {
+  reliability_agreement: boolean;
+  dst_reliable_belief: number;
+  del_reliable_probability: number;
+  belief_difference: number;
+  uncertainty_comparison: string;
+  narrative: string;
+}
+
+export interface UncertaintyProfile {
+  modality_assessments: ModalityAssessmentData[];
+  fusion: FusionResultData;
+  comparison: TheoryComparisonData;
+  completeness: number;
+  present_modalities: string[];
+  missing_modalities: string[];
+}
+
 export interface EncryptResult {
   success: boolean;
   operation_id: string;
@@ -46,6 +103,7 @@ export interface EncryptResult {
       auth_tag: string;
       iv: string;
     }>;
+    uncertainty_profile?: UncertaintyProfile;
   };
   keys_summary: Array<{
     modality: string;
@@ -53,6 +111,7 @@ export interface EncryptResult {
     iv_hex: string;
   }>;
   binding_hash: string;
+  uncertainty?: UncertaintyProfile;
 }
 
 export interface DecryptResult {
@@ -67,6 +126,7 @@ export interface DecryptResult {
     download_url: string;
     content_preview?: string;
   }>;
+  uncertainty_profile?: UncertaintyProfile;
   error_type?: string;
   detail?: string;
 }
