@@ -55,13 +55,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       name: 'Ingestion & Normalization',
       desc: 'Normalizes heterogeneous file streams (DICOM scans, unstructured text reports, EHR JSON) into structured typed binary envelopes with a 64-byte typed header (CFBLB\\x00).',
       tag: '64B Header',
+      accent: 'text-cyan-400',
     },
     {
       id: 2,
       numeral: 'Stage II',
-      name: 'Uncertainty Quantification (DST vs DEL)',
-      desc: 'Pre-encryption evidence fusion extracting Shannon entropy, format validity, and size conformance. Quantifies multi-modal fusion and missing modality uncertainty.',
-      tag: 'DST + DEL Engine',
+      name: 'Uncertainty Quantification',
+      desc: 'Applies Dempster-Shafer Theory (DST) and Deep Evidential Learning (DEL) independently to each modality\'s byte content. Computes reliability scores, inter-modal conflict coefficient K, and completeness ratio. UQ report is embedded in the encrypted bundle manifest.',
+      tag: 'DST vs DEL',
+      accent: 'text-violet-400',
     },
     {
       id: 3,
@@ -69,6 +71,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       name: 'Key Generation Hierarchy',
       desc: 'Derives independent ephemeral AES-256 symmetric keys and 96-bit nonces per modality, alongside a master HMAC-SHA-256 binding key from CSPRNG entropy.',
       tag: 'Multi-Key Ring',
+      accent: 'text-amber-400',
     },
     {
       id: 4,
@@ -76,6 +79,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       name: 'AES-256-GCM AEAD Encryption',
       desc: 'Encrypts normalized payloads with Galois/Counter Mode, outputting authenticated ciphertexts paired with 128-bit integrity tags for hardware acceleration.',
       tag: 'AEAD Encryption',
+      accent: 'text-indigo-400',
     },
     {
       id: 5,
@@ -83,13 +87,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       name: 'Cross-Modal HMAC Binding',
       desc: 'Computes a deterministic cryptographic binding hash over canonical sorted ciphertext blobs, IVs, and tags to seal the entire patient bundle into an atomic unit.',
       tag: 'HMAC-SHA-256',
+      accent: 'text-emerald-400',
     },
     {
       id: 6,
       numeral: 'Stage VI',
       name: 'Packaging & Split Courier',
-      desc: 'Compiles data payload into an atomic .cryptoflow binary container with embedded uncertainty profile while key material is partitioned for secure delivery.',
+      desc: 'Compiles data payload into an atomic .cryptoflow binary container while key material (.keyring) is partitioned for secure out-of-band delivery. UQ profile is embedded in the manifest.',
       tag: '.cryptoflow Bundle',
+      accent: 'text-purple-400',
     },
   ];
 
@@ -151,7 +157,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       id: 'pipeline' as ViewType,
       numeral: 'MODULE II',
       title: '6-Stage Pipeline Visualizer',
-      desc: 'Watch real-time state machine transitions, pre-encryption DST & DEL uncertainty quantification, AEAD byte stream transformations, and HMAC wax sealing.',
+      desc: 'Watch real-time state machine transitions — including DST/DEL uncertainty scoring, key derivations, AEAD byte stream transformations, and HMAC wax sealing.',
       icon: <Zap className="w-5 h-5 text-amber-400" />,
       cta: 'Explore Pipeline',
     },
@@ -189,7 +195,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
           <span>PRODUCTION RELEASE v1.0</span>
           <span className="text-zinc-600">•</span>
-          <span className="text-cyan-300">POST-QUANTUM HMAC-SHA-256 + AES-256-GCM • DUAL UNCERTAINTY (DST + DEL)</span>
+          <span className="text-cyan-300">POST-QUANTUM HMAC-SHA-256 + AES-256-GCM</span>
         </div>
 
         <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight leading-tight max-w-4xl mx-auto">
@@ -216,7 +222,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             className="btn-secondary px-5 py-2.5 text-xs font-medium flex items-center gap-2 cursor-pointer"
           >
             <Zap className="w-4 h-4 text-amber-400" />
-            <span>6-Stage Pipeline</span>
+            <span>5-Stage Pipeline</span>
           </button>
 
           <button
@@ -337,95 +343,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Dual Uncertainty Quantification (DST vs DEL) Scientific Showcase */}
-      <div className="surface-card rounded-2xl p-8 mb-16 border-rose-500/20 bg-linear-to-b from-zinc-900/60 to-zinc-950/90">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-800">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Activity className="w-4 h-4 text-rose-400" />
-              <span className="badge-danger px-2.5 py-0.5 rounded text-[11px] font-mono font-medium">
-                SCIENTIFIC RESEARCH EXTENSION • STAGE II
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">
-              Dual Theoretical Uncertainty Quantification (DST vs DEL)
-            </h2>
-            <p className="text-xs text-zinc-400 mt-1 max-w-2xl font-sans">
-              CryptoFlow addresses multi-modal fusion inconsistency and missing clinical record uncertainty by evaluating classical evidence theory against modern evidential deep learning before encryption.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('pipeline')}
-            className="btn-secondary px-4 py-2 text-xs font-medium flex items-center gap-2 self-start md:self-auto cursor-pointer"
-          >
-            <Activity className="w-3.5 h-3.5 text-rose-400" />
-            <span>Inspect UQ in Visualizer</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Theory 1: DST */}
-          <div className="p-5 bg-zinc-950/80 border border-cyan-500/30 rounded-xl">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
-              <span className="font-mono text-xs font-bold text-cyan-400">DEMPSTER-SHAFER THEORY (1976)</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Classical Evidence</span>
-            </div>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-3">
-              Models belief, disbelief, and explicit ignorance mass m(Θ) over frame Θ = &#123;reliable, unreliable&#125;. Fuses modalities via Dempster's Rule while detecting inter-modality conflict coefficient K.
-            </p>
-            <div className="grid grid-cols-3 gap-2 text-xs font-mono bg-zinc-900/80 p-2.5 rounded-lg border border-zinc-800">
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Fused Belief</span>
-                <span className="text-cyan-300 font-bold text-sm">99.97%</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Conflict (K)</span>
-                <span className="text-emerald-400 font-bold text-sm">0.0000</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Ignorance m(Θ)</span>
-                <span className="text-zinc-300 font-bold text-sm">0.026%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Theory 2: DEL */}
-          <div className="p-5 bg-zinc-950/80 border border-amber-500/30 rounded-xl">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
-              <span className="font-mono text-xs font-bold text-amber-400">DEEP EVIDENTIAL LEARNING (2018)</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Dirichlet Evidential</span>
-            </div>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-3">
-              Parameterizes reliability via Dirichlet concentration parameters Dir(α_r, α_u) based on accumulated byte-level evidence. Explicitly bounds epistemic uncertainty (vacuity u = K/S).
-            </p>
-            <div className="grid grid-cols-3 gap-2 text-xs font-mono bg-zinc-900/80 p-2.5 rounded-lg border border-zinc-800">
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Expected Rel</span>
-                <span className="text-amber-300 font-bold text-sm">96.87%</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Vacuity (u)</span>
-                <span className="text-zinc-300 font-bold text-sm">0.0625</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-zinc-500 block">Strength (S)</span>
-                <span className="text-amber-400 font-bold text-sm">32.0</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-3.5 bg-zinc-900/60 rounded-xl border border-zinc-800 font-mono text-xs text-zinc-300 flex items-start gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="text-white font-semibold">Consensus Finding: </span>
-            <span>Both theories reach consensus that complete multi-modal bundles are reliable. DST converges decisively to 99.97% belief under agreement, while DEL retains calibrated residual epistemic uncertainty (u = 6.25%) governed by finite evidence bounds. The full report is sealed directly into the bundle manifest.</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 6-Stage Cryptographic Pipeline Breakdown */}
+      {/* 5-Stage Cryptographic Pipeline Breakdown */}
       <div className="mb-16">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-3 border-b border-zinc-800">
           <div>
@@ -433,7 +351,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               THE 6-STAGE PIPELINE
             </span>
             <h2 className="text-2xl font-bold text-white tracking-tight mt-1">
-              End-to-End Cryptographic & Evidence Transformation
+              End-to-End Cryptographic Transformation
             </h2>
           </div>
           <button
@@ -446,7 +364,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {pipelineStages.map((st) => (
             <div key={st.id} className="surface-card surface-card-hover rounded-xl p-4 flex flex-col justify-between">
               <div>
@@ -454,7 +372,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-cyan-400 border border-zinc-700">
                     {st.numeral}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500">{st.tag}</span>
+                  <span className={`text-[10px] font-mono ${st.accent}`}>{st.tag}</span>
                 </div>
                 <h3 className="font-semibold text-xs text-zinc-100 mb-1.5 leading-snug">
                   {st.name}
