@@ -102,6 +102,7 @@ export interface DecryptResult {
     download_url: string;
     content_preview?: string;
   }>;
+  uncertainty_profile?: UncertaintyProfile;
   error_type?: string;
   detail?: string;
 }
