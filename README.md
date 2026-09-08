@@ -38,29 +38,54 @@ CryptoFlow treats multimodal patient bundles as an **atomic, tamper-evident unit
                                           |
                                           v
   +--------------------------------------------------------------------------------+
-  | STAGE 2: KEY GENERATION                                                        |
+  | STAGE 2: UNCERTAINTY QUANTIFICATION (DST + DEL)                                |
+  | Dempster-Shafer Theory & Deep Evidential Learning — head-to-head comparison    |
+  | Assesses multi-modal fusion uncertainty & missing information uncertainty       |
+  | Output: Uncertainty profile embedded in bundle manifest                        |
+  +---------------------------------------+----------------------------------------+
+                                          |
+                                          v
+  +--------------------------------------------------------------------------------+
+  | STAGE 3: KEY GENERATION                                                        |
   | Generates unique CSPRNG AES-256 keys + 96-bit nonces + 256-bit HMAC key        |
   +---------------------------------------+----------------------------------------+
                                           |
                                           v
   +--------------------------------------------------------------------------------+
-  | STAGE 3: AES-256-GCM ENCRYPTION                                                |
+  | STAGE 4: AES-256-GCM ENCRYPTION                                                |
   | Encrypts each normalized blob -> Ciphertext + 128-bit Authentication Tag       |
   +---------------------------------------+----------------------------------------+
                                           |
                                           v
   +--------------------------------------------------------------------------------+
-  | STAGE 4: CROSS-MODAL BINDING HASH                                              |
+  | STAGE 5: CROSS-MODAL BINDING HASH                                              |
   | Binding Hash = HMAC-SHA-256(Key, Sorted(Ciphertext_i || Tag_i || Nonce_i))     |
   +---------------------------------------+----------------------------------------+
                                           |
                                           v
   +--------------------------------------------------------------------------------+
-  | STAGE 5: PACKAGING & SPLIT COURIER                                             |
+  | STAGE 6: PACKAGING & SPLIT COURIER                                             |
   |  - Data Package:  <bundle_id>.cryptoflow (Header + Manifest + Ciphertexts)     |
   |  - Key Material:  <bundle_id>.keyring    (Sent via Out-of-Band Channel)        |
   +--------------------------------------------------------------------------------+
 ```
+
+### Stage 2: Uncertainty Quantification
+
+A doctor receiving an encrypted multi-modal patient record needs to know not just "is the data intact?" but also "is this data complete? Are all the modalities consistent? Should I trust the image more than the report?"
+
+Stage 2 addresses this by applying **two academically recognized uncertainty frameworks** to the ingested data and comparing them head-to-head:
+
+| Theory | Type | Key Idea | Missing Data Handling |
+|---|---|---|---|
+| **Dempster-Shafer Theory** (Shafer, 1976) | Classical evidence theory | Mass functions over {reliable, unreliable} with explicit ignorance m(Θ) | Vacuous BPA: m(Θ) = 1.0 |
+| **Deep Evidential Learning** (Sensoy et al., 2018) | Dirichlet-based neural uncertainty | Concentration parameters α encode evidence; uncertainty u = K/S | Vacuous Dirichlet: Dir(1,1), u = 1.0 |
+
+**Two uncertainty types are handled:**
+1. **Multi-modal Fusion Uncertainty** — quality and consistency of each modality, assessed through byte-level entropy, file size conformance, and format validity features.
+2. **Missing Information Uncertainty** — when a modality is absent, both theories produce maximal uncertainty indicators rather than silently ignoring the gap.
+
+The uncertainty profile (per-modality scores, fused results, theory comparison) is embedded in the `.cryptoflow` bundle manifest so the receiver also sees it upon decryption.
 
 ---
 
@@ -80,7 +105,8 @@ CryptoFlow treats multimodal patient bundles as an **atomic, tamper-evident unit
 +-------------------------------------------------------------+
 | 2. MANIFEST SECTION (Variable Length, JSON)                 |
 |    Contains version, bundle_id, timestamp, HMAC binding     |
-|    hash, and per-modality metadata (offsets, tags, IVs).    |
+|    hash, per-modality metadata (offsets, tags, IVs), and    |
+|    the uncertainty quantification profile (DST + DEL).      |
 +-------------------------------------------------------------+
 | 3. BLOB PAYLOAD SECTION (Concatenated Ciphertexts)          |
 |    - [Encrypted Image Blob]                                 |
@@ -282,15 +308,16 @@ cryptoflow/
 │   └── cryptoflow/
 │       ├── __init__.py
 │       ├── cli.py              # CLI commands (encrypt, decrypt, benchmark, etc.)
-│       ├── pipeline.py         # Main 5-stage encryption orchestrator
+│       ├── pipeline.py         # Main 6-stage encryption orchestrator
 │       ├── synthetic.py        # Realistic DICOM/report/JSON data generator
 │       ├── exceptions.py       # Custom exception hierarchy
 │       ├── stages/             # Modular encryption stages
 │       │   ├── ingest.py       # Stage 1: File normalisation & header packing
-│       │   ├── keygen.py       # Stage 2: CSPRNG key generation
-│       │   ├── encrypt.py      # Stage 3: AES-256-GCM encryption
-│       │   ├── binding.py      # Stage 4: HMAC-SHA-256 cross-modal binding
-│       │   └── package.py      # Stage 5: Custom .cryptoflow binary writer
+│       │   ├── uncertainty.py  # Stage 2: DST + DEL uncertainty quantification
+│       │   ├── keygen.py       # Stage 3: CSPRNG key generation
+│       │   ├── encrypt.py      # Stage 4: AES-256-GCM encryption
+│       │   ├── binding.py      # Stage 5: HMAC-SHA-256 cross-modal binding
+│       │   └── package.py      # Stage 6: Custom .cryptoflow binary writer
 │       ├── decrypt/            # Decryption & integrity verification
 │       │   └── pipeline.py     # Unpack, binding check, GCM check, restore
 │       ├── attacks/            # Attack simulation suite
@@ -300,7 +327,8 @@ cryptoflow/
 │       │   └── plotter.py      # Publication-quality matplotlib/seaborn figures
 │       ├── models/             # Dataclasses and JSON serialization
 │       │   ├── modality.py     # ModalityType, NormalizedBlob, RawModality
-│       │   └── bundle.py       # KeyRing, BundleManifest, EncryptedBlob
+│       │   ├── bundle.py       # KeyRing, BundleManifest, EncryptedBlob
+│       │   └── uncertainty.py  # UncertaintyReport, DSTResult, DELResult
 │       └── utils/
 │           ├── crypto.py       # Cryptography library wrappers
 │           └── io.py           # File I/O and format utilities
@@ -309,6 +337,7 @@ cryptoflow/
 │   ├── test_crypto.py
 │   ├── test_pipeline.py
 │   ├── test_attacks.py
+│   ├── test_uncertainty.py
 │   ├── test_benchmark_synthetic.py
 │   └── test_cli.py
 ├── data/

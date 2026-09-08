@@ -64,6 +64,7 @@ def package_bundle(
     original_filenames: dict[ModalityType, str],
     output_dir: Path,
     recipient_pubkey_pem: bytes | None = None,
+    uncertainty_profile: dict[str, object] | None = None,
 ) -> tuple[Path, Path, dict]:
     """Package encrypted blobs into a .cryptoflow bundle file.
 
@@ -79,6 +80,8 @@ def package_bundle(
         original_filenames: Map of modality to original basename.
         output_dir: Directory for output files.
         recipient_pubkey_pem: Optional RSA public key in PEM format to wrap the keyring.
+        uncertainty_profile: Optional uncertainty quantification report
+            (JSON dict) to embed in the bundle manifest.
 
     Returns:
         Tuple of (bundle_path, keyring_path, stats_dict).
@@ -118,6 +121,7 @@ def package_bundle(
         modalities=modality_entries,
         binding_hash=binding_hash,
         total_size=0,  # Will be updated after computing total
+        uncertainty_profile=uncertainty_profile,
     )
 
     manifest_json = json.dumps(

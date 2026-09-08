@@ -177,6 +177,20 @@ def decrypt_bundle(
         manifest.binding_hash.hex()[:16],
     )
 
+    # Display uncertainty profile if present in the manifest
+    if manifest.uncertainty_profile is not None:
+        up = manifest.uncertainty_profile
+        comparison = up.get("comparison", {})  # type: ignore[union-attr]
+        logger.info(
+            "[DECRYPT] Uncertainty profile present — "
+            "completeness: %s, theories agree: %s",
+            up.get("completeness", "N/A"),  # type: ignore[union-attr]
+            comparison.get("reliability_agreement", "N/A"),
+        )
+        narrative = comparison.get("narrative", "")
+        if narrative:
+            logger.info("[DECRYPT] Uncertainty summary: %s", narrative)
+
     # --- Extract encrypted blobs ---
     blob_section_start = manifest_end
     encrypted_blobs: list[EncryptedBlob] = []

@@ -3,7 +3,7 @@
 Re-exports the public entry point of each stage for convenient
 top-level imports::
 
-    from cryptoflow.stages import ingest, generate_keys, encrypt_blobs, bind, package_bundle
+    from cryptoflow.stages import ingest, assess_uncertainty, generate_keys, encrypt_blobs, bind, package_bundle
 """
 
 from __future__ import annotations
@@ -13,9 +13,11 @@ from cryptoflow.stages.encrypt import encrypt_blobs
 from cryptoflow.stages.ingest import ingest
 from cryptoflow.stages.keygen import generate_keys
 from cryptoflow.stages.package import package_bundle
+from cryptoflow.stages.uncertainty import assess_uncertainty
 
 __all__ = [
     "ingest",
+    "assess_uncertainty",
     "generate_keys",
     "encrypt_blobs",
     "bind",

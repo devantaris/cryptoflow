@@ -342,6 +342,10 @@ class BundleManifest:
         modalities: Per-modality metadata records.
         binding_hash: 32-byte HMAC-SHA-256 cross-modality hash.
         total_size: Total byte-length of the serialised bundle.
+        uncertainty_profile: Optional uncertainty quantification
+            report produced by the DST / DEL analysis stage.
+            Embedded so the receiver can inspect the uncertainty
+            profile of the data they received.
     """
 
     version: int
@@ -351,6 +355,7 @@ class BundleManifest:
     modalities: list[ModalityEntry]
     binding_hash: bytes
     total_size: int
+    uncertainty_profile: dict[str, object] | None = None
 
     # -- serialisation helpers ------------------------------------
 
@@ -361,7 +366,7 @@ class BundleManifest:
             Dictionary with hex-encoded bytes fields and nested
             modality entries.
         """
-        return {
+        result: dict[str, object] = {
             "version": self.version,
             "bundle_id": self.bundle_id,
             "created_at": self.created_at,
@@ -372,6 +377,9 @@ class BundleManifest:
             "binding_hash": self.binding_hash.hex(),
             "total_size": self.total_size,
         }
+        if self.uncertainty_profile is not None:
+            result["uncertainty_profile"] = self.uncertainty_profile
+        return result
 
     @classmethod
     def from_json(cls, data: dict[str, object]) -> BundleManifest:
@@ -385,6 +393,7 @@ class BundleManifest:
             Reconstructed :class:`BundleManifest`.
         """
         modalities_data: list[dict[str, object]] = data["modalities"]  # type: ignore[assignment]
+        uncertainty = data.get("uncertainty_profile")  # type: ignore[arg-type]
         return cls(
             version=int(data["version"]),  # type: ignore[arg-type]
             bundle_id=str(data["bundle_id"]),
@@ -395,4 +404,5 @@ class BundleManifest:
             ],
             binding_hash=bytes.fromhex(str(data["binding_hash"])),
             total_size=int(data["total_size"]),  # type: ignore[arg-type]
+            uncertainty_profile=uncertainty,  # type: ignore[arg-type]
         )

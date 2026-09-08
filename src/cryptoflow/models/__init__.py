@@ -1,9 +1,10 @@
 """Data models, configuration schemas, and domain entities.
 
-Re-exports every public name from :mod:`cryptoflow.models.modality`
-and :mod:`cryptoflow.models.bundle` so callers can write::
+Re-exports every public name from :mod:`cryptoflow.models.modality`,
+:mod:`cryptoflow.models.bundle`, and :mod:`cryptoflow.models.uncertainty`
+so callers can write::
 
-    from cryptoflow.models import ModalityType, BundleManifest
+    from cryptoflow.models import ModalityType, BundleManifest, UncertaintyReport
 """
 
 from __future__ import annotations
@@ -37,6 +38,17 @@ from cryptoflow.models.bundle import (
     ModalityEntry,
 )
 
+# -- uncertainty types ---------------------------------------------
+from cryptoflow.models.uncertainty import (
+    DELResult,
+    DSTResult,
+    FeatureVector,
+    FusionResult,
+    ModalityAssessment,
+    TheoryComparison,
+    UncertaintyReport,
+)
+
 __all__: list[str] = [
     # modality.py
     "HEADER_MAGIC",
@@ -61,4 +73,12 @@ __all__: list[str] = [
     "EncryptionKey",
     "KeyRing",
     "ModalityEntry",
+    # uncertainty.py
+    "DELResult",
+    "DSTResult",
+    "FeatureVector",
+    "FusionResult",
+    "ModalityAssessment",
+    "TheoryComparison",
+    "UncertaintyReport",
 ]

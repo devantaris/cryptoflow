@@ -40,7 +40,7 @@ def test_full_pipeline_roundtrip(tmp_path: Path) -> None:
 
     assert bundle_path.exists()
     assert keyring_path.exists()
-    assert len(progress_stages) == 6
+    assert len(progress_stages) == 7
     assert meta["file_count"] == 3
     assert bundle_path.stat().st_size > len(orig_image) + len(orig_text) + len(orig_meta)
 
