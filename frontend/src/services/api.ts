@@ -97,9 +97,65 @@ export async function encryptBundle(
   const rawMetaSize = new TextEncoder().encode(metadataJson).length;
   const totalRaw = rawImageSize + rawReportSize + rawMetaSize;
 
-  const hexHash = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  const randBytes = (n: number) => crypto.getRandomValues(new Uint8Array(n));
+  const toHex = (b: Uint8Array) => Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+
+  const hexHash   = toHex(randBytes(32));
+  const aesKey1   = toHex(randBytes(32));
+  const aesKey2   = toHex(randBytes(32));
+  const aesKey3   = toHex(randBytes(32));
+  const hmacKey   = toHex(randBytes(32));
+  const iv1       = toHex(randBytes(12));
+  const iv2       = toHex(randBytes(12));
+  const iv3       = toHex(randBytes(12));
+  const authTag1  = toHex(randBytes(16));
+  const authTag2  = toHex(randBytes(16));
+  const authTag3  = toHex(randBytes(16));
+
+  // Build a realistic synthetic .cryptoflow binary blob
+  const enc = new TextEncoder();
+  const magic = new Uint8Array([0x43, 0x46, 0x4C, 0x4F, 0x57, 0x00, 0x00, 0x00]); // CFLOW\0\0\0
+  const manifestObj = {
+    version: 1, bundle_id: bundleId,
+    created_at: new Date().toISOString(),
+    modality_count: 3,
+    binding_hash: hexHash,
+    total_size: totalRaw + 847,
+    modalities: [
+      { modality_type: 'image',    original_filename: imageFile ? imageFile.name : 'chest_ct_scan.dcm',  original_size: rawImageSize, encrypted_size: rawImageSize + 64, offset: 0, auth_tag: authTag1, iv: iv1 },
+      { modality_type: 'text',     original_filename: 'radiology_report.txt',  original_size: rawReportSize, encrypted_size: rawReportSize + 64, offset: rawImageSize + 64, auth_tag: authTag2, iv: iv2 },
+      { modality_type: 'metadata', original_filename: 'patient_metadata.json', original_size: rawMetaSize,   encrypted_size: rawMetaSize + 64,   offset: rawImageSize + rawReportSize + 128, auth_tag: authTag3, iv: iv3 },
+    ],
+  };
+  const manifestBytes = enc.encode(JSON.stringify(manifestObj));
+  const manifestLen = new Uint8Array(4);
+  new DataView(manifestLen.buffer).setUint32(0, manifestBytes.length, true);
+  // Header: magic(8) + bundle_id_bytes(16) + manifest_len(4) + reserved(36) = 64 bytes
+  const bundleIdBytes = enc.encode(bundleId.replace(/-/g, '').slice(0, 16));
+  const header = new Uint8Array(64);
+  header.set(magic, 0);
+  header.set(bundleIdBytes, 8);
+  header.set(manifestLen, 24);
+  // Synthetic ciphertext payload (random bytes representing encrypted modalities)
+  const payload = randBytes(Math.min(totalRaw + 200, 8192));
+  const bundleBlob = new Blob([header, manifestBytes, payload], { type: 'application/octet-stream' });
+
+  // Build a realistic .keyring JSON
+  const keyringObj = {
+    version: 1,
+    bundle_id: bundleId,
+    hmac_key: hmacKey,
+    keys: [
+      { modality_type: 'image',    key: aesKey1, iv: iv1 },
+      { modality_type: 'text',     key: aesKey2, iv: iv2 },
+      { modality_type: 'metadata', key: aesKey3, iv: iv3 },
+    ],
+  };
+  const keyringBlob = new Blob([JSON.stringify(keyringObj, null, 2)], { type: 'application/json' });
+
+  // Create object URLs for immediate browser download
+  const bundleUrl  = URL.createObjectURL(bundleBlob);
+  const keyringUrl = URL.createObjectURL(keyringBlob);
 
   return {
     success: true,
@@ -107,8 +163,8 @@ export async function encryptBundle(
     bundle_id: bundleId,
     bundle_filename: `${bundleId}.cryptoflow`,
     keyring_filename: `${bundleId}.keyring`,
-    bundle_download_url: `/api/v1/download-bundle/${bundleId}.cryptoflow`,
-    keyring_download_url: `/api/v1/download-keyring/${bundleId}.keyring`,
+    bundle_download_url: bundleUrl,
+    keyring_download_url: keyringUrl,
     metrics: {
       total_raw_bytes: totalRaw,
       bundle_size_bytes: totalRaw + 847,
@@ -116,46 +172,12 @@ export async function encryptBundle(
       duration_seconds: 0.034,
     },
     manifest: {
-      version: 1,
-      bundle_id: bundleId,
-      created_at: new Date().toISOString(),
-      modality_count: 3,
-      binding_hash: hexHash,
-      total_size: totalRaw + 847,
-      modalities: [
-        {
-          modality_type: 'image',
-          original_filename: imageFile ? imageFile.name : 'chest_ct_scan.dcm',
-          original_size: rawImageSize,
-          encrypted_size: rawImageSize + 64,
-          offset: 0,
-          auth_tag: hexHash.slice(0, 32),
-          iv: hexHash.slice(32, 56),
-        },
-        {
-          modality_type: 'text',
-          original_filename: 'radiology_report.txt',
-          original_size: rawReportSize,
-          encrypted_size: rawReportSize + 64,
-          offset: rawImageSize + 64,
-          auth_tag: hexHash.slice(10, 42),
-          iv: hexHash.slice(12, 36),
-        },
-        {
-          modality_type: 'metadata',
-          original_filename: 'patient_metadata.json',
-          original_size: rawMetaSize,
-          encrypted_size: rawMetaSize + 64,
-          offset: rawImageSize + rawReportSize + 128,
-          auth_tag: hexHash.slice(20, 52),
-          iv: hexHash.slice(24, 48),
-        },
-      ],
+      ...manifestObj,
     },
     keys_summary: [
-      { modality: 'image', key_hex: hexHash.slice(0, 64), iv_hex: hexHash.slice(0, 24) },
-      { modality: 'text', key_hex: hexHash.slice(16, 80) || hexHash, iv_hex: hexHash.slice(10, 34) },
-      { modality: 'metadata', key_hex: hexHash.slice(32, 96) || hexHash, iv_hex: hexHash.slice(20, 44) },
+      { modality: 'image',    key_hex: aesKey1.slice(0, 8) + '...' + aesKey1.slice(-8), iv_hex: iv1 },
+      { modality: 'text',     key_hex: aesKey2.slice(0, 8) + '...' + aesKey2.slice(-8), iv_hex: iv2 },
+      { modality: 'metadata', key_hex: aesKey3.slice(0, 8) + '...' + aesKey3.slice(-8), iv_hex: iv3 },
     ],
     binding_hash: hexHash,
   };
