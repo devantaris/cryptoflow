@@ -88,7 +88,6 @@ export interface UncertaintyProfile {
     del: { expected_reliable: number; epistemic_uncertainty: number };
     features?: { entropy_bits: number; entropy_score: number; size_score: number; format_score: number };
   }>;
-// closing brace removed — kept in EncryptResult below
 }
 
 export interface DecryptResult {
