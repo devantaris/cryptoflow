@@ -65,3 +65,6 @@ datasets/
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent & Local configs
+.claude/
