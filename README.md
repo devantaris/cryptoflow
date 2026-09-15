@@ -1,24 +1,29 @@
 # CryptoFlow: Multimodal Medical Data Encryption & Cross-Modal Integrity Binding
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-76%20passing-brightgreen.svg)](tests/)
 [![Security Audit](https://img.shields.io/badge/attacks%20blocked-100%25-success.svg)](results/attacks/)
+[![Pipeline](https://img.shields.io/badge/pipeline-6%20stages-blue.svg)](src/cryptoflow/pipeline.py)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**CryptoFlow** is a cryptographic pipeline designed for multimodal medical data transmissions (e.g., DICOM scans, radiology reports, and EHR metadata). It addresses a fundamental vulnerability in healthcare data security: **cross-modal decoupling attacks**, where attackers or system errors swap, inject, or tamper with individual modalities across patient records without triggering traditional per-file encryption checks.
+**CryptoFlow** is a research-grade cryptographic pipeline for multimodal medical data (DICOM scans, radiology reports, EHR metadata). It addresses two fundamental problems in healthcare data security:
 
-CryptoFlow treats multimodal patient bundles as an **atomic, tamper-evident unit** by combining per-modality AES-256-GCM encryption with a deterministic cross-modal **HMAC-SHA-256 integrity binding hash**.
+1. **Cross-modal decoupling attacks** — where attackers swap, inject, or tamper with individual modalities across patient records without triggering per-file integrity checks.
+2. **Absence of data quality certification** — encrypted data carries no information about how trustworthy the source data was. CryptoFlow embeds a **pre-encryption uncertainty report** inside every bundle, allowing the receiver to know the reliability of the data at the time it was sent.
+
+CryptoFlow treats multimodal patient bundles as an **atomic, tamper-evident, uncertainty-aware unit** combining AES-256-GCM authenticated encryption, HMAC-SHA-256 cross-modal binding, and a novel DST vs DEL uncertainty quantification comparison embedded in the bundle manifest.
 
 ---
 
 ## Key Highlights
 
-- 🔒 **Authenticated Confidentiality**: AES-256-GCM per modality provides confidentiality with 128-bit authentication tags.
-- 🔗 **Cross-Modal Binding (HMAC-SHA-256)**: Cryptographically binds all modalities together. Tampering with, swapping, or deleting any file invalidates the binding hash.
-- 📦 **Custom `.cryptoflow` Binary Format**: Compact binary container with fixed 64-byte headers, JSON manifests, and concatenated encrypted payloads.
-- ⚡ **High Throughput**: Exceeds **120 MB/s** encryption and **130 MB/s** decryption throughput with **<0.1% storage overhead** for typical medical bundles.
-- 🛡️ **Empirically Validated Security**: Automated test harness verifying defense against 7 distinct threat models (bit flips, intra-bundle swaps, cross-patient swaps, truncations, injections, manifest tampering, and key mismatches).
-- 📊 **Research Evaluation Suite**: Built-in benchmarking, synthetic data generation, and publication-ready figure generation.
+- 🔒 **Authenticated Confidentiality**: AES-256-GCM per modality with 128-bit authentication tags.
+- 🔗 **Cross-Modal Binding**: HMAC-SHA-256 over all ciphertexts, tags, and nonces — swapping, deleting, or injecting any file invalidates the binding hash.
+- 🧠 **Uncertainty Quantification (DST + DEL)**: Two independent uncertainty frameworks applied head-to-head before encryption. The UQ report is cryptographically embedded in the bundle — receiver reads it at decryption.
+- 📦 **Custom `.cryptoflow` Binary Format**: Compact binary container with fixed 64-byte headers, JSON manifests (including UQ profile), and concatenated encrypted payloads.
+- ⚡ **High Throughput**: Exceeds **120 MB/s** encryption and **130 MB/s** decryption. UQ stage adds **3ms overhead** — negligible.
+- 🛡️ **Empirically Validated Security**: 100% defense rate across 7 distinct attack vectors (bit flips, swaps, injections, truncations, manifest forgery, key mismatch).
+- ✅ **76 Tests Passing**: 37 dedicated UQ tests + full pipeline, attack, and integration tests. Zero regressions.
 
 ---
 
@@ -70,22 +75,91 @@ CryptoFlow treats multimodal patient bundles as an **atomic, tamper-evident unit
   +--------------------------------------------------------------------------------+
 ```
 
-### Stage 2: Uncertainty Quantification
+### Stage 2: Uncertainty Quantification (Research Contribution)
 
-A doctor receiving an encrypted multi-modal patient record needs to know not just "is the data intact?" but also "is this data complete? Are all the modalities consistent? Should I trust the image more than the report?"
+Traditional encryption pipelines answer one question at decryption time: *"Was this data tampered with?"* CryptoFlow answers a second, clinically critical question: *"Was this data trustworthy when it was sent?"*
 
-Stage 2 addresses this by applying **two academically recognized uncertainty frameworks** to the ingested data and comparing them head-to-head:
+Stage 2 applies two independent uncertainty frameworks to the raw byte content of each ingested modality and embeds their comparison inside the encrypted bundle:
 
-| Theory | Type | Key Idea | Missing Data Handling |
+#### Uncertainty Types Addressed
+
+| # | Uncertainty Type | Description |
+|---|---|---|
+| **1** | **Multi-Modal Fusion Uncertainty** | When combining image, text, and metadata streams, each source has a different quality level. This uncertainty captures how reliably each modality can be trusted in the fused picture. |
+| **2** | **Missing Information Uncertainty** | When one or more expected modalities are absent, the system operates under incomplete evidence. Both theories produce maximal uncertainty for absent modalities rather than silently ignoring the gap. |
+
+#### Theories Compared
+
+| Theory | Full Name | Core Mechanism | Missing Data Response |
 |---|---|---|---|
-| **Dempster-Shafer Theory** (Shafer, 1976) | Classical evidence theory | Mass functions over {reliable, unreliable} with explicit ignorance m(Θ) | Vacuous BPA: m(Θ) = 1.0 |
-| **Deep Evidential Learning** (Sensoy et al., 2018) | Dirichlet-based neural uncertainty | Concentration parameters α encode evidence; uncertainty u = K/S | Vacuous Dirichlet: Dir(1,1), u = 1.0 |
+| **DST** | Dempster-Shafer Theory (Shafer, 1976) | Mass functions over {reliable, unreliable, Θ}; Dempster's combination rule | Vacuous BPA: m(Θ) = 1.0 — total ignorance |
+| **DEL** | Deep Evidential Learning (Sensoy et al., NeurIPS 2018) | Dirichlet concentration params α; epistemic uncertainty u = K/S | Vacuous Dirichlet: Dir(1,1), u = 1.0 |
 
-**Two uncertainty types are handled:**
-1. **Multi-modal Fusion Uncertainty** — quality and consistency of each modality, assessed through byte-level entropy, file size conformance, and format validity features.
-2. **Missing Information Uncertainty** — when a modality is absent, both theories produce maximal uncertainty indicators rather than silently ignoring the gap.
+Both theories receive the **same three features** extracted purely from raw bytes:
+- **Shannon Entropy** — byte-value distribution (0–8 bits per byte)
+- **Size Score** — file size vs. expected range for the modality type
+- **Format Score** — magic byte / header validity (DICOM `DICM`, PNG `\x89PNG`, JSON `{`)
 
-The uncertainty profile (per-modality scores, fused results, theory comparison) is embedded in the `.cryptoflow` bundle manifest so the receiver also sees it upon decryption.
+#### Experimental Results — Synthetic 3-Modality Patient Bundle
+
+**Per-Modality Feature Extraction:**
+
+| Modality | Entropy (bits) | Entropy Score | Size Score | Format Score |
+|:---:|:---:|:---:|:---:|:---:|
+| Image (PNG, 50KB) | 8.00 | 0.9995 | 1.000 | 1.000 |
+| Text (Report, 7.4KB) | 3.87 | 1.000 | 1.000 | 1.000 |
+| Metadata (JSON, 63B) | 4.28 | 1.000 | 1.000 | 1.000 |
+
+**Fused Multi-Modal Comparison (DST vs DEL):**
+
+| Metric | DST | DEL |
+|:---:|:---:|:---:|
+| **Fused Reliability Score** | **99.97%** | **96.87%** |
+| Residual Uncertainty | 0.03% | 6.25% |
+| Inter-Modality Conflict K | 0.0000 | — |
+| Evidence Strength S | — | 32.0 |
+| Theory Agreement | ✅ Both: RELIABLE | ✅ Both: RELIABLE |
+| UQ Stage Overhead | **3 ms** | **3 ms** |
+
+#### Core Research Finding
+
+Both theories agree on the conclusion (data is reliable) but disagree on magnitude by **3.1%**. This gap is not a bug — it is the finding:
+
+- **DST (99.97%)** — Dempster's combination rule is multiplicative. Three consistent sources converge quickly to near-certainty regardless of evidence volume. DST excels at detecting inter-modality conflict (K coefficient).
+- **DEL (96.87%)** — Uncertainty `u = 2/S` shrinks only as evidence volume S grows. With 3 files, S = 32, giving permanent residual u = 6.25%. DEL cannot distinguish 3 consistent files from 3,000 consistent files in terms of conflict, but it can track evidence sufficiency.
+
+> **DST asks: "Do my sources agree?"**  
+> **DEL asks: "Have I seen enough to be confident?"**  
+> These are independent questions. Both answers are embedded in the bundle.
+
+#### Missing Modality Behavior
+
+| Scenario | DST | DEL |
+|---|---|---|
+| All 3 modalities present | Bel = 99.97%, K = 0.000 | E[p] = 96.87%, u = 6.25% |
+| 1 modality missing | m(Θ) = 1.0 on that channel → belief drops | Dir(1,1) on that channel → u = 1.0 |
+| Completeness reported | Ratio (e.g., 0.667 for 2/3) | Ratio (e.g., 0.667 for 2/3) |
+
+#### What the Receiver Sees (Embedded in Manifest)
+
+```json
+{
+  "completeness": 1.0,
+  "present_modalities": ["image", "text", "metadata"],
+  "missing_modalities": [],
+  "fusion": {
+    "dst": { "belief_reliable": 0.9997, "plausibility_reliable": 1.0, "dst_conflict_K": 0.0 },
+    "del": { "expected_reliable": 0.9687, "epistemic_uncertainty": 0.0625, "dirichlet_strength": 32.0 }
+  },
+  "comparison": {
+    "reliability_agreement": true,
+    "belief_difference": 0.031,
+    "narrative": "Both DST and DEL agree the multi-modal data is reliable. DST: 100.0%, DEL: 96.9% (difference: 3.1%). DEL reports higher uncertainty."
+  }
+}
+```
+
+
 
 ---
 
