@@ -43,11 +43,15 @@ from __future__ import annotations
 import logging
 import math
 from collections import Counter
+from typing import Any
+
+import numpy as np
 
 from cryptoflow.models.modality import ModalityType, NormalizedBlob
 from cryptoflow.models.uncertainty import (
     DELResult,
     DSTResult,
+    ExplainabilityReport,
     FeatureVector,
     FusionResult,
     ModalityAssessment,
@@ -590,6 +594,321 @@ def _compare_theories(
 
 
 # =========================================================================
+# Explainability engines (SHAP for DST + LIME for DEL)
+# =========================================================================
+
+def shap_dst(features: FeatureVector) -> dict[str, float]:
+    """Compute Shapley values for each feature's contribution to DST belief.
+
+    DST combines features using Dempster's Rule of Combination — a
+    non-linear, multiplicative operator. SHAP averages marginal
+    contributions across all possible coalitions of features.
+
+    The baseline value for an absent feature is 0.5 (neutral evidence,
+    representing maximum ignorance in binary evidence).
+
+    Shapley values satisfy the efficiency axiom:
+        sum(phi_i) == Bel(actual) - Bel(baseline)
+
+    Args:
+        features: Feature vector to explain.
+
+    Returns:
+        Dictionary mapping feature names ('entropy_score', 'size_score',
+        'format_score') to their Shapley values phi_i.
+    """
+    feature_names = ["entropy_score", "size_score", "format_score"]
+    N = len(feature_names)
+
+    actual_scores = {
+        "entropy_score": features.entropy_score,
+        "size_score": features.size_score,
+        "format_score": features.format_score,
+    }
+
+    def v(subset: frozenset[str]) -> float:
+        fv = FeatureVector(
+            entropy=features.entropy,
+            entropy_score=actual_scores["entropy_score"] if "entropy_score" in subset else 0.5,
+            size_score=actual_scores["size_score"] if "size_score" in subset else 0.5,
+            format_score=actual_scores["format_score"] if "format_score" in subset else 0.5,
+        )
+        return _dst_assess(fv).belief_reliable
+
+    # Cache subset values across all 2^N subsets
+    v_cache: dict[frozenset[str], float] = {}
+    for i in range(1 << N):
+        s = frozenset(feature_names[j] for j in range(N) if (i & (1 << j)))
+        v_cache[s] = v(s)
+
+    shapley_values: dict[str, float] = {}
+    for feat in feature_names:
+        phi = 0.0
+        others = [f for f in feature_names if f != feat]
+        for i in range(1 << len(others)):
+            s = frozenset(others[j] for j in range(len(others)) if (i & (1 << j)))
+            card_s = len(s)
+            weight = (math.factorial(card_s) * math.factorial(N - card_s - 1)) / math.factorial(N)
+            marginal_contrib = v_cache[s | {feat}] - v_cache[s]
+            phi += weight * marginal_contrib
+        shapley_values[feat] = phi
+
+    return shapley_values
+
+
+def shap_dst_modalities(blobs: list[NormalizedBlob]) -> dict[str, float]:
+    """Compute Shapley values at the modality level for fused DST belief.
+
+    Treats each modality (image, text, metadata) as a player in a cooperative
+    game. The characteristic function v(S) computes the fused DST belief
+    using Dempster's Rule of Combination for modalities in subset S, with
+    absent modalities assigned the vacuous mass function m(Theta) = 1.0.
+
+    Shapley values satisfy:
+        sum(phi_modality) == Bel_fused(actual) - Bel_fused(empty)
+
+    Args:
+        blobs: Normalised blobs from the ingest stage.
+
+    Returns:
+        Dictionary mapping modality names ('image', 'text', 'metadata')
+        to their Shapley values.
+    """
+    modality_names = [m.value for m in ALL_MODALITIES]
+    N = len(modality_names)
+
+    blob_map = {b.modality_type: b for b in blobs}
+
+    actual_masses: dict[str, tuple[float, float, float]] = {}
+    for mod_type in ALL_MODALITIES:
+        name = mod_type.value
+        if mod_type in blob_map:
+            fv = extract_features(blob_map[mod_type])
+            dst_res = _dst_assess(fv)
+            actual_masses[name] = (
+                dst_res.mass_reliable,
+                dst_res.mass_unreliable,
+                dst_res.mass_uncertain,
+            )
+        else:
+            actual_masses[name] = (0.0, 0.0, 1.0)
+
+    def v(subset: frozenset[str]) -> float:
+        masses = [
+            actual_masses[name] if name in subset else (0.0, 0.0, 1.0)
+            for name in modality_names
+        ]
+        fused_res, _ = _dst_fuse_modalities(masses)
+        return fused_res.belief_reliable
+
+    v_cache: dict[frozenset[str], float] = {}
+    for i in range(1 << N):
+        s = frozenset(modality_names[j] for j in range(N) if (i & (1 << j)))
+        v_cache[s] = v(s)
+
+    shapley_values: dict[str, float] = {}
+    for mod in modality_names:
+        phi = 0.0
+        others = [m for m in modality_names if m != mod]
+        for i in range(1 << len(others)):
+            s = frozenset(others[j] for j in range(len(others)) if (i & (1 << j)))
+            card_s = len(s)
+            weight = (math.factorial(card_s) * math.factorial(N - card_s - 1)) / math.factorial(N)
+            marginal_contrib = v_cache[s | {mod}] - v_cache[s]
+            phi += weight * marginal_contrib
+        shapley_values[mod] = phi
+
+    return shapley_values
+
+
+def lime_del(
+    features: FeatureVector,
+    n_samples: int = 500,
+    sigma: float | dict[str, float] = 0.1,
+    seed: int | None = 42,
+) -> dict[str, Any]:
+    """Compute LIME linear explanation for DEL Dirichlet evidence accumulation.
+
+    DEL evidence accumulation is additive and locally smooth. LIME generates
+    perturbed feature vectors in the local neighbourhood, evaluates DEL
+    expected reliability E[p_reliable] on each sample, weights samples by
+    proximity to the operating point, and fits a weighted linear regression:
+
+        E[p_reliable] ≈ beta_0 + beta_1 * entropy + beta_2 * size + beta_3 * format
+
+    Args:
+        features: Feature vector at the operating point to explain.
+        n_samples: Number of perturbation samples (default 500).
+        sigma: Perturbation standard deviation (default 0.1, or per-feature dict).
+        seed: Random seed for deterministic reproducibility (default 42).
+
+    Returns:
+        Dictionary with keys:
+        - 'entropy_score': beta_1 (float)
+        - 'size_score': beta_2 (float)
+        - 'format_score': beta_3 (float)
+        - 'intercept': beta_0 (float)
+        - 'dominant_feature': Feature name with highest |beta| (str)
+    """
+    feature_names = ["entropy_score", "size_score", "format_score"]
+    x = np.array(
+        [features.entropy_score, features.size_score, features.format_score],
+        dtype=float,
+    )
+
+    if isinstance(sigma, (int, float)):
+        sigmas = [float(sigma)] * 3
+    elif isinstance(sigma, dict):
+        sigmas = [float(sigma.get(k, 0.1)) for k in feature_names]
+    else:
+        sigmas = [0.1] * 3
+
+    rng = np.random.default_rng(seed)
+
+    x_pert = np.zeros((n_samples, 3), dtype=float)
+    for j in range(3):
+        if sigmas[j] > 0:
+            noise = rng.normal(0.0, sigmas[j], size=n_samples)
+            x_pert[:, j] = np.clip(x[j] + noise, 0.0, 1.0)
+        else:
+            x_pert[:, j] = x[j]
+
+    y = np.zeros(n_samples, dtype=float)
+    for i in range(n_samples):
+        fv = FeatureVector(
+            entropy=0.0,
+            entropy_score=float(x_pert[i, 0]),
+            size_score=float(x_pert[i, 1]),
+            format_score=float(x_pert[i, 2]),
+        )
+        y[i] = _del_assess(fv).expected_reliable
+
+    diff = x_pert - x
+    d2 = np.sum(diff ** 2, axis=1)
+    pos_sigmas = [s for s in sigmas if s > 0]
+    kernel_sigma = float(np.mean(pos_sigmas)) if pos_sigmas else 0.1
+    w = np.exp(-d2 / (kernel_sigma ** 2))
+
+    varying_mask = np.array([bool(np.ptp(x_pert[:, j]) > 1e-9) for j in range(3)])
+
+    beta = np.zeros(4, dtype=float)
+    if not np.any(varying_mask):
+        beta[0] = float(np.mean(y))
+    else:
+        cols = [np.ones(n_samples, dtype=float)]
+        varying_indices = [j for j in range(3) if varying_mask[j]]
+        for j in varying_indices:
+            cols.append(x_pert[:, j])
+        X = np.column_stack(cols)
+        w_sqrt = np.sqrt(w)[:, np.newaxis]
+        X_w = X * w_sqrt
+        y_w = y * np.sqrt(w)
+
+        fit_coeffs, _, _, _ = np.linalg.lstsq(X_w, y_w, rcond=None)
+        beta[0] = float(fit_coeffs[0])
+        for idx, j in enumerate(varying_indices):
+            beta[j + 1] = float(fit_coeffs[idx + 1])
+
+    result: dict[str, Any] = {
+        "entropy_score": float(beta[1]),
+        "size_score": float(beta[2]),
+        "format_score": float(beta[3]),
+        "intercept": float(beta[0]),
+    }
+    dominant_feat = max(feature_names, key=lambda k: abs(result[k]))
+    result["dominant_feature"] = dominant_feat
+
+    return result
+
+
+def compute_explainability(
+    blobs: list[NormalizedBlob],
+    modality_assessments: list[ModalityAssessment],
+) -> ExplainabilityReport:
+    """Compute complete SHAP (DST) and LIME (DEL) explainability report.
+
+    Args:
+        blobs: Normalised blobs from the ingest stage.
+        modality_assessments: Per-modality uncertainty assessments.
+
+    Returns:
+        :class:`ExplainabilityReport` containing feature-level and
+        modality-level attributions.
+    """
+    feature_names = ["entropy_score", "size_score", "format_score"]
+    dst_shap_per_modality: dict[str, dict[str, float]] = {}
+    del_lime_per_modality: dict[str, dict[str, float]] = {}
+    del_lime_intercepts: dict[str, float] = {}
+
+    for assessment in modality_assessments:
+        mod = assessment.modality
+        if assessment.present and assessment.features is not None:
+            s_dst = shap_dst(assessment.features)
+            dst_shap_per_modality[mod] = s_dst
+
+            l_del = lime_del(assessment.features)
+            del_lime_per_modality[mod] = {
+                "entropy_score": l_del["entropy_score"],
+                "size_score": l_del["size_score"],
+                "format_score": l_del["format_score"],
+            }
+            del_lime_intercepts[mod] = l_del["intercept"]
+        else:
+            dst_shap_per_modality[mod] = {
+                "entropy_score": 0.0,
+                "size_score": 0.0,
+                "format_score": 0.0,
+            }
+            del_lime_per_modality[mod] = {
+                "entropy_score": 0.0,
+                "size_score": 0.0,
+                "format_score": 0.0,
+            }
+            del_lime_intercepts[mod] = 0.5
+
+    dst_shap_modality_level = shap_dst_modalities(blobs)
+
+    avg_abs_phi = {
+        f: (
+            sum(abs(dst_shap_per_modality[m][f]) for m in dst_shap_per_modality)
+            / max(1, len(dst_shap_per_modality))
+        )
+        for f in feature_names
+    }
+    dst_dominant_feature = max(feature_names, key=lambda f: avg_abs_phi[f])
+
+    dst_dominant_modality = max(
+        dst_shap_modality_level.keys(),
+        key=lambda m: abs(dst_shap_modality_level[m]),
+    )
+
+    avg_abs_beta = {
+        f: (
+            sum(abs(del_lime_per_modality[m][f]) for m in del_lime_per_modality)
+            / max(1, len(del_lime_per_modality))
+        )
+        for f in feature_names
+    }
+    del_dominant_feature = max(feature_names, key=lambda f: avg_abs_beta[f])
+
+    del_dominant_modality = max(
+        del_lime_per_modality.keys(),
+        key=lambda m: sum(abs(v) for v in del_lime_per_modality[m].values()),
+    )
+
+    return ExplainabilityReport(
+        dst_shap_per_modality=dst_shap_per_modality,
+        dst_shap_modality_level=dst_shap_modality_level,
+        dst_dominant_feature=dst_dominant_feature,
+        dst_dominant_modality=dst_dominant_modality,
+        del_lime_per_modality=del_lime_per_modality,
+        del_lime_intercepts=del_lime_intercepts,
+        del_dominant_feature=del_dominant_feature,
+        del_dominant_modality=del_dominant_modality,
+    )
+
+
+# =========================================================================
 # Public stage entry point
 # =========================================================================
 
@@ -726,6 +1045,17 @@ def assess_uncertainty(
         fused_dst, fused_del, max_conflict, completeness,
     )
     logger.info("[UNCERTAINTY] Comparison: %s", comparison.narrative)
+
+    # ── Explainability (SHAP for DST + LIME for DEL) ────────────
+    explainability = compute_explainability(blobs, assessments)
+    logger.info(
+        "[UNCERTAINTY] Explainability — DST dominant: %s (%s), "
+        "DEL dominant: %s (%s)",
+        explainability.dst_dominant_feature,
+        explainability.dst_dominant_modality,
+        explainability.del_dominant_feature,
+        explainability.del_dominant_modality,
+    )
     logger.info("[UNCERTAINTY] Assessment complete")
 
     return UncertaintyReport(
@@ -735,4 +1065,5 @@ def assess_uncertainty(
         completeness=completeness,
         present_modalities=present_list,
         missing_modalities=missing_list,
+        explainability=explainability,
     )
