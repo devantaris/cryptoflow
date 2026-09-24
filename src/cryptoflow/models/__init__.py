@@ -42,6 +42,7 @@ from cryptoflow.models.bundle import (
 from cryptoflow.models.uncertainty import (
     DELResult,
     DSTResult,
+    ExplainabilityReport,
     FeatureVector,
     FusionResult,
     ModalityAssessment,
@@ -76,6 +77,7 @@ __all__: list[str] = [
     # uncertainty.py
     "DELResult",
     "DSTResult",
+    "ExplainabilityReport",
     "FeatureVector",
     "FusionResult",
     "ModalityAssessment",

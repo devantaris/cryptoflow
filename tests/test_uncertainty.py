@@ -24,6 +24,7 @@ from cryptoflow.models.modality import (
 from cryptoflow.models.uncertainty import (
     DELResult,
     DSTResult,
+    ExplainabilityReport,
     FeatureVector,
     ModalityAssessment,
     UncertaintyReport,
@@ -38,7 +39,11 @@ from cryptoflow.stages.uncertainty import (
     _dst_mass_from_feature,
     _shannon_entropy,
     assess_uncertainty,
+    compute_explainability,
     extract_features,
+    lime_del,
+    shap_dst,
+    shap_dst_modalities,
 )
 from cryptoflow.synthetic import generate_patient_bundle
 
@@ -577,3 +582,143 @@ class TestTheoryComparison:
 
         # Completeness should reflect the difference
         assert full_report.completeness > partial_report.completeness
+
+
+# =========================================================================
+# Explainability tests (SHAP for DST + LIME for DEL)
+# =========================================================================
+
+class TestExplainability:
+    """Verify SHAP for DST and LIME for DEL explainability modules."""
+
+    def test_shap_dst_values_sum_to_delta_bel(self) -> None:
+        """Shapley values must sum to (Bel_actual - Bel_baseline)."""
+        fv = FeatureVector(
+            entropy=6.0,
+            entropy_score=0.9,
+            size_score=0.8,
+            format_score=0.7,
+        )
+        shap_vals = shap_dst(fv)
+        bel_actual = _dst_assess(fv).belief_reliable
+        baseline_fv = FeatureVector(
+            entropy=fv.entropy,
+            entropy_score=0.5,
+            size_score=0.5,
+            format_score=0.5,
+        )
+        bel_baseline = _dst_assess(baseline_fv).belief_reliable
+        delta_bel = bel_actual - bel_baseline
+
+        assert sum(shap_vals.values()) == pytest.approx(delta_bel, abs=1e-6)
+
+    def test_shap_dst_worst_feature_dominates_when_corrupt(self) -> None:
+        """When one feature = 0.0, its SHAP value must be most negative."""
+        fv = FeatureVector(
+            entropy=6.0,
+            entropy_score=0.0,  # corrupted
+            size_score=1.0,
+            format_score=1.0,
+        )
+        shap_vals = shap_dst(fv)
+        assert shap_vals["entropy_score"] < 0.0
+        assert shap_vals["entropy_score"] < shap_vals["size_score"]
+        assert shap_vals["entropy_score"] < shap_vals["format_score"]
+        assert min(shap_vals, key=shap_vals.get) == "entropy_score"
+
+    def test_shap_dst_equal_contributions_when_all_perfect(self) -> None:
+        """When all features = 1.0, SHAP values should be equal (symmetric)."""
+        fv = FeatureVector(
+            entropy=6.0,
+            entropy_score=1.0,
+            size_score=1.0,
+            format_score=1.0,
+        )
+        shap_vals = shap_dst(fv)
+        assert shap_vals["entropy_score"] == pytest.approx(shap_vals["size_score"], abs=1e-6)
+        assert shap_vals["size_score"] == pytest.approx(shap_vals["format_score"], abs=1e-6)
+        assert all(v > 0.0 for v in shap_vals.values())
+
+    def test_lime_del_coefficients_positive_for_valid_data(self) -> None:
+        """All beta should be positive for valid high-quality data."""
+        fv = FeatureVector(
+            entropy=6.0,
+            entropy_score=1.0,
+            size_score=1.0,
+            format_score=1.0,
+        )
+        lime_res = lime_del(fv)
+        assert lime_res["entropy_score"] > 0.0
+        assert lime_res["size_score"] > 0.0
+        assert lime_res["format_score"] > 0.0
+
+    def test_lime_del_entropy_dominates_for_image(self) -> None:
+        """For image modality, entropy coefficient should be highest (most variable feature)."""
+        # When image entropy is outside optimal band (e.g. score ~ 0.90),
+        # entropy is the weakest-link feature, making DEL E[p_reliable] most sensitive to it.
+        fv = FeatureVector(
+            entropy=8.0,
+            entropy_score=0.90,
+            size_score=1.0,
+            format_score=1.0,
+        )
+        lime_res = lime_del(fv)
+        assert lime_res["entropy_score"] > lime_res["size_score"]
+        assert lime_res["entropy_score"] > lime_res["format_score"]
+        assert lime_res["dominant_feature"] == "entropy_score"
+
+    def test_lime_del_coefficients_near_zero_for_format_at_perfect(self) -> None:
+        """When format_score=1.0 always, beta_format ≈ 0 (no local variation)."""
+        fv = FeatureVector(
+            entropy=6.0,
+            entropy_score=0.95,
+            size_score=0.95,
+            format_score=1.0,
+        )
+        lime_res = lime_del(
+            fv,
+            sigma={"entropy_score": 0.1, "size_score": 0.1, "format_score": 0.0},
+        )
+        assert lime_res["format_score"] == pytest.approx(0.0, abs=1e-5)
+
+    def test_explainability_in_full_pipeline(self, tmp_path: Path) -> None:
+        """Run assess_uncertainty(), check explainability field is populated."""
+        raw = generate_patient_bundle(tmp_path / "raw", image_size_bytes=4096)
+        from cryptoflow.stages.ingest import ingest
+        blobs = ingest({
+            ModalityType.IMAGE: raw["image"],
+            ModalityType.TEXT: raw["text"],
+            ModalityType.METADATA: raw["metadata"],
+        })
+        report = assess_uncertainty(blobs)
+        assert report.explainability is not None
+        exp = report.explainability
+        assert "image" in exp.dst_shap_per_modality
+        assert "text" in exp.dst_shap_per_modality
+        assert "metadata" in exp.dst_shap_per_modality
+        assert "image" in exp.del_lime_per_modality
+        assert len(exp.dst_shap_modality_level) == 3
+        assert exp.dst_dominant_feature in ["entropy_score", "size_score", "format_score"]
+        assert exp.dst_dominant_modality in ["image", "text", "metadata"]
+        assert exp.del_dominant_feature in ["entropy_score", "size_score", "format_score"]
+        assert exp.del_dominant_modality in ["image", "text", "metadata"]
+
+    def test_explainability_json_serializable(self, tmp_path: Path) -> None:
+        """to_json() must return a plain dict with no custom objects."""
+        raw = generate_patient_bundle(tmp_path / "raw", image_size_bytes=4096)
+        from cryptoflow.stages.ingest import ingest
+        blobs = ingest({
+            ModalityType.IMAGE: raw["image"],
+            ModalityType.TEXT: raw["text"],
+            ModalityType.METADATA: raw["metadata"],
+        })
+        report = assess_uncertainty(blobs)
+        assert report.explainability is not None
+        exp_json = report.explainability.to_json()
+        serialized = json.dumps(exp_json)
+        parsed = json.loads(serialized)
+        assert "dst_shap" in parsed
+        assert "del_lime" in parsed
+        assert "dst_shap_per_modality" in parsed
+        assert "del_lime_per_modality" in parsed
+

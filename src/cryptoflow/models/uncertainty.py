@@ -250,6 +250,93 @@ class TheoryComparison:
 
 
 # ---------------------------------------------------------------------------
+# Explainability report (SHAP for DST + LIME for DEL)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class ExplainabilityReport:
+    """Explainability assessment attributing uncertainty drivers.
+
+    Provides feature-level and modality-level attributions:
+    - **SHAP for DST**: Exact Shapley values attributing contributions
+      to Dempster-Shafer belief scores across non-linear combinations.
+    - **LIME for DEL**: Local linear regression coefficients attributing
+      evidence accumulation in Dirichlet Evidential Learning.
+
+    Attributes:
+        dst_shap_per_modality: Modality -> feature -> Shapley value.
+        dst_shap_modality_level: Modality -> Shapley value.
+        dst_dominant_feature: Feature with highest average |phi|.
+        dst_dominant_modality: Modality with highest |phi|.
+        del_lime_per_modality: Modality -> feature -> coefficient.
+        del_lime_intercepts: Modality -> linear intercept.
+        del_dominant_feature: Feature with highest average |beta|.
+        del_dominant_modality: Modality with highest sum |beta|.
+    """
+
+    # SHAP for DST
+    dst_shap_per_modality: dict[str, dict[str, float]]
+    dst_shap_modality_level: dict[str, float]
+    dst_dominant_feature: str
+    dst_dominant_modality: str
+
+    # LIME for DEL
+    del_lime_per_modality: dict[str, dict[str, float]]
+    del_lime_intercepts: dict[str, float]
+    del_dominant_feature: str
+    del_dominant_modality: str
+
+    def to_json(self) -> dict[str, object]:
+        """Serialise to a JSON-safe dictionary."""
+        return {
+            "dst_shap": {
+                **{
+                    mod: {k: round(v, 6) for k, v in feats.items()}
+                    for mod, feats in self.dst_shap_per_modality.items()
+                },
+                "modality_shap": {
+                    mod: round(v, 6)
+                    for mod, v in self.dst_shap_modality_level.items()
+                },
+                "dominant_feature": self.dst_dominant_feature,
+                "dominant_modality": self.dst_dominant_modality,
+            },
+            "del_lime": {
+                **{
+                    mod: {k: round(v, 6) for k, v in feats.items()}
+                    for mod, feats in self.del_lime_per_modality.items()
+                },
+                "intercepts": {
+                    mod: round(v, 6)
+                    for mod, v in self.del_lime_intercepts.items()
+                },
+                "dominant_feature": self.del_dominant_feature,
+                "dominant_modality": self.del_dominant_modality,
+            },
+            "dst_shap_per_modality": {
+                mod: {k: round(v, 6) for k, v in feats.items()}
+                for mod, feats in self.dst_shap_per_modality.items()
+            },
+            "dst_shap_modality_level": {
+                mod: round(v, 6)
+                for mod, v in self.dst_shap_modality_level.items()
+            },
+            "dst_dominant_feature": self.dst_dominant_feature,
+            "dst_dominant_modality": self.dst_dominant_modality,
+            "del_lime_per_modality": {
+                mod: {k: round(v, 6) for k, v in feats.items()}
+                for mod, feats in self.del_lime_per_modality.items()
+            },
+            "del_lime_intercepts": {
+                mod: round(v, 6)
+                for mod, v in self.del_lime_intercepts.items()
+            },
+            "del_dominant_feature": self.del_dominant_feature,
+            "del_dominant_modality": self.del_dominant_modality,
+        }
+
+
+# ---------------------------------------------------------------------------
 # Top-level uncertainty report
 # ---------------------------------------------------------------------------
 
@@ -259,7 +346,7 @@ class UncertaintyReport:
 
     This is the primary output of the uncertainty stage.  It
     contains per-modality assessments, fusion results, completeness
-    metrics, and a head-to-head comparison of DST vs DEL.
+    metrics, a head-to-head comparison of DST vs DEL, and explainability.
 
     The JSON form of this report is embedded in the encrypted
     bundle's manifest so that the *receiver* also sees the
@@ -272,6 +359,7 @@ class UncertaintyReport:
         completeness: Fraction of expected modalities present (0–1).
         present_modalities: Modality type strings that were provided.
         missing_modalities: Modality type strings that were absent.
+        explainability: SHAP and LIME explainability metrics.
     """
 
     modality_assessments: list[ModalityAssessment]
@@ -280,10 +368,11 @@ class UncertaintyReport:
     completeness: float
     present_modalities: list[str]
     missing_modalities: list[str]
+    explainability: ExplainabilityReport | None = None
 
     def to_json(self) -> dict[str, object]:
         """Serialise to a JSON-safe dictionary."""
-        return {
+        result: dict[str, object] = {
             "modality_assessments": [
                 a.to_json() for a in self.modality_assessments
             ],
@@ -293,3 +382,7 @@ class UncertaintyReport:
             "present_modalities": self.present_modalities,
             "missing_modalities": self.missing_modalities,
         }
+        if self.explainability is not None:
+            result["explainability"] = self.explainability.to_json()
+        return result
+
